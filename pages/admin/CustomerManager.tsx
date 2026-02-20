@@ -487,6 +487,27 @@ const CustomerManager: React.FC = () => {
                         </div>
 
                         <div className="p-6 bg-gray-50 rounded-3xl border border-gray-100 space-y-4">
+                            <h4 className="font-bold text-gray-900 flex items-center gap-2"><Coins size={18} className="text-[#f4d300]" /> Loyalty Program</h4>
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-gray-500 uppercase">Points Balance</label>
+                                {isEditing ? (
+                                    <input 
+                                        type="number"
+                                        className="w-full p-3 bg-white border border-gray-200 rounded-xl font-bold text-gray-900 outline-none focus:ring-2 focus:ring-[#f4d300]" 
+                                        value={editForm.loyaltyPoints} 
+                                        onChange={e => setEditForm({ ...editForm, loyaltyPoints: Number(e.target.value) })}
+                                        placeholder="0"
+                                    />
+                                ) : (
+                                    <div className="px-4 py-3 bg-white rounded-xl border border-gray-200 font-bold text-gray-700 flex items-center gap-2">
+                                        <span className="text-[#f4d300]"><Coins size={16} /></span>
+                                        {selectedUser.loyaltyPoints} Points
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="p-6 bg-gray-50 rounded-3xl border border-gray-100 space-y-4">
                             <h4 className="font-bold text-gray-900 flex items-center gap-2"><ShieldCheck size={18} className="text-blue-500" /> Security (Admin Access)</h4>
                             <div className="space-y-2">
                                 <label className="text-xs font-bold text-gray-500 uppercase">Password</label>

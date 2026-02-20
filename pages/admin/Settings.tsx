@@ -42,7 +42,7 @@ const resizeImage = (file: File, maxWidth: number, maxHeight: number): Promise<s
 
 
 const Settings: React.FC = () => {
-  const { config, updateConfig, togglePreviewMode, products, users, orders, posts, restoreData, previewData, setPreviewData, syncToSheet, promoCodes, rawMaterials, productionBatches } = useApp();
+  const { config, updateConfig, togglePreviewMode, products, users, orders, posts, restoreData, previewData, setPreviewData, syncToSheet, promoCodes, rawMaterials, productionBatches, activityLogs } = useApp();
   const [formData, setFormData] = useState<AppConfig>(previewData?.config || config);
   const navigate = useNavigate();
   const [isSaving, setIsSaving] = useState(false);
@@ -50,7 +50,19 @@ const Settings: React.FC = () => {
   // Manual Restore State
   const [showManualRestore, setShowManualRestore] = useState(false);
   const [manualRestoreData, setManualRestoreData] = useState('');
-  const [restoreScope, setRestoreScope] = useState({ config: true, data: true });
+  const [parsedRestoreData, setParsedRestoreData] = useState<any>(null);
+  
+  const [restoreSelection, setRestoreSelection] = useState({
+      config: true,
+      products: true,
+      users: true,
+      orders: true,
+      posts: true,
+      promoCodes: true,
+      rawMaterials: true,
+      productionBatches: true,
+      activityLogs: true
+  });
 
   useEffect(() => {
       if (!previewData?.config) setFormData(config);
@@ -107,17 +119,18 @@ const Settings: React.FC = () => {
   };
 
   const handleBackup = () => {
-    const data = { 
-        config: formData, 
-        products, 
-        users, 
-        orders, 
-        posts, 
-        promoCodes, 
-        rawMaterials,
-        productionBatches,
-        timestamp: new Date().toISOString() 
-    };
+    const data: any = { timestamp: new Date().toISOString() };
+    
+    if (restoreSelection.config) data.config = formData;
+    if (restoreSelection.products) data.products = products;
+    if (restoreSelection.users) data.users = users;
+    if (restoreSelection.orders) data.orders = orders;
+    if (restoreSelection.posts) data.posts = posts;
+    if (restoreSelection.promoCodes) data.promoCodes = promoCodes;
+    if (restoreSelection.rawMaterials) data.rawMaterials = rawMaterials;
+    if (restoreSelection.productionBatches) data.productionBatches = productionBatches;
+    if (restoreSelection.activityLogs) data.activityLogs = activityLogs;
+
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -130,57 +143,70 @@ const Settings: React.FC = () => {
   };
 
   const handleCopyToClipboard = () => {
-      const data = { 
-          config: formData, 
-          products, 
-          users, 
-          orders, 
-          posts, 
-          promoCodes,
-          rawMaterials,
-          productionBatches, 
-          timestamp: new Date().toISOString() 
-      };
+      const data: any = { timestamp: new Date().toISOString() };
+      if (restoreSelection.config) data.config = formData;
+      if (restoreSelection.products) data.products = products;
+      if (restoreSelection.users) data.users = users;
+      if (restoreSelection.orders) data.orders = orders;
+      if (restoreSelection.posts) data.posts = posts;
+      if (restoreSelection.promoCodes) data.promoCodes = promoCodes;
+      if (restoreSelection.rawMaterials) data.rawMaterials = rawMaterials;
+      if (restoreSelection.productionBatches) data.productionBatches = productionBatches;
+      if (restoreSelection.activityLogs) data.activityLogs = activityLogs;
+
       const jsonString = JSON.stringify(data, null, 0); // Minified for clipboard
       navigator.clipboard.writeText(jsonString).then(() => {
-          alert("Success! Full system state copied to clipboard.\n\nYou can save this text in a secure file or paste it back here later to restore.");
+          alert("Success! Selected data copied to clipboard.");
       }).catch(err => {
           alert("Failed to copy to clipboard: " + err);
       });
   };
 
-  const handleManualRestoreSubmit = () => {
-      if (!manualRestoreData) return;
+  const parseRestoreInput = (input: string) => {
       try {
-          const data = JSON.parse(manualRestoreData);
-          if (!data.products && !data.users && !data.config) {
-              throw new Error("Invalid data format. Missing key sections.");
-          }
-          
-          if (window.confirm(`Detected backup from ${data.timestamp || 'unknown date'}.\n\nThis will OVERWRITE current app data. Are you sure?`)) {
-              processRestore(data);
-              setManualRestoreData('');
-              setShowManualRestore(false);
-              alert("System state restored successfully.");
-          }
+          const data = JSON.parse(input);
+          setParsedRestoreData(data);
+          // Auto-select available fields
+          setRestoreSelection({
+              config: !!data.config,
+              products: !!data.products,
+              users: !!data.users,
+              orders: !!data.orders,
+              posts: !!data.posts,
+              promoCodes: !!data.promoCodes,
+              rawMaterials: !!data.rawMaterials,
+              productionBatches: !!data.productionBatches,
+              activityLogs: !!data.activityLogs
+          });
       } catch (e) {
-          alert("Invalid JSON Data. Please ensure you pasted the exact text generated by the 'Copy' button.");
-          console.error(e);
+          setParsedRestoreData(null);
+      }
+  };
+
+  const handleManualRestoreSubmit = () => {
+      if (!parsedRestoreData) return;
+      
+      if (window.confirm(`Restore selected data from ${parsedRestoreData.timestamp || 'unknown date'}?\n\nThis will OVERWRITE current data for the selected sections.`)) {
+          processRestore(parsedRestoreData);
+          setManualRestoreData('');
+          setParsedRestoreData(null);
+          setShowManualRestore(false);
+          alert("System state restored successfully.");
       }
   };
 
   const processRestore = (data: any) => {
       const payload: any = {};
-      if (restoreScope.config && data.config) payload.config = data.config;
-      if (restoreScope.data) {
-          if(data.products) payload.products = data.products;
-          if(data.users) payload.users = data.users;
-          if(data.orders) payload.orders = data.orders;
-          if(data.posts) payload.posts = data.posts;
-          if(data.promoCodes) payload.promoCodes = data.promoCodes;
-          if(data.rawMaterials) payload.rawMaterials = data.rawMaterials;
-          if(data.productionBatches) payload.productionBatches = data.productionBatches;
-      }
+      if (restoreSelection.config && data.config) payload.config = data.config;
+      if (restoreSelection.products && data.products) payload.products = data.products;
+      if (restoreSelection.users && data.users) payload.users = data.users;
+      if (restoreSelection.orders && data.orders) payload.orders = data.orders;
+      if (restoreSelection.posts && data.posts) payload.posts = data.posts;
+      if (restoreSelection.promoCodes && data.promoCodes) payload.promoCodes = data.promoCodes;
+      if (restoreSelection.rawMaterials && data.rawMaterials) payload.rawMaterials = data.rawMaterials;
+      if (restoreSelection.productionBatches && data.productionBatches) payload.productionBatches = data.productionBatches;
+      if (restoreSelection.activityLogs && data.activityLogs) payload.activityLogs = data.activityLogs;
+      
       restoreData(payload);
       if (payload.config) setFormData(payload.config);
   };
@@ -191,13 +217,31 @@ const Settings: React.FC = () => {
         reader.onload = (ev) => {
             try {
                 const data = JSON.parse(ev.target?.result as string);
-                if(window.confirm('Restore selected data?')) processRestore(data);
+                setParsedRestoreData(data);
+                setManualRestoreData(JSON.stringify(data, null, 2));
+                setShowManualRestore(true);
+                // Auto-select available
+                setRestoreSelection({
+                    config: !!data.config,
+                    products: !!data.products,
+                    users: !!data.users,
+                    orders: !!data.orders,
+                    posts: !!data.posts,
+                    promoCodes: !!data.promoCodes,
+                    rawMaterials: !!data.rawMaterials,
+                    productionBatches: !!data.productionBatches,
+                    activityLogs: !!data.activityLogs
+                });
             } catch (err) {
                 alert('Invalid backup file.');
             }
         };
         reader.readAsText(e.target.files[0]);
     }
+  };
+  
+  const toggleSelection = (key: keyof typeof restoreSelection) => {
+      setRestoreSelection(prev => ({ ...prev, [key]: !prev[key] }));
   };
   
   return (
@@ -430,6 +474,11 @@ const Settings: React.FC = () => {
                   </div>
               </div>
           </div>
+          
+          <div className="p-4 bg-yellow-50 rounded-2xl border border-yellow-100 text-xs text-yellow-800 flex gap-2">
+              <Database size={16} className="shrink-0"/>
+              <p><strong>Hosting on Vercel?</strong> Vercel does not store data permanently. You MUST configure Google Drive or Firebase above, or manually backup/restore your data regularly using these tools.</p>
+          </div>
 
           {/* Manual Restore Text Area */}
           {showManualRestore && (
@@ -443,15 +492,38 @@ const Settings: React.FC = () => {
                       className="w-full h-48 bg-black text-green-400 font-mono text-xs p-4 rounded-xl border border-gray-700 focus:border-[#f4d300] outline-none resize-none"
                       placeholder='Paste JSON data here... {"config": ...}'
                       value={manualRestoreData}
-                      onChange={(e) => setManualRestoreData(e.target.value)}
+                      onChange={(e) => {
+                          setManualRestoreData(e.target.value);
+                          parseRestoreInput(e.target.value);
+                      }}
                   />
+                  
+                  {parsedRestoreData && (
+                      <div className="bg-gray-800 p-4 rounded-xl border border-gray-700 space-y-3">
+                          <p className="text-xs font-bold text-white uppercase tracking-widest">Select Data to Restore/Backup:</p>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                              {Object.keys(restoreSelection).map((key) => (
+                                  <label key={key} className="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-gray-700 transition-colors">
+                                      <input 
+                                          type="checkbox" 
+                                          checked={(restoreSelection as any)[key]} 
+                                          onChange={() => toggleSelection(key as any)}
+                                          className="rounded border-gray-600 bg-gray-700 text-[#f4d300] focus:ring-[#f4d300]"
+                                      />
+                                      <span className="text-xs text-gray-300 capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}</span>
+                                  </label>
+                              ))}
+                          </div>
+                      </div>
+                  )}
+
                   <div className="flex justify-end">
                       <button 
                           onClick={handleManualRestoreSubmit}
-                          disabled={!manualRestoreData}
+                          disabled={!parsedRestoreData}
                           className="bg-red-600 text-white px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                       >
-                          <RotateCcw size={14} /> Restore from Text
+                          <RotateCcw size={14} /> Restore Selected Data
                       </button>
                   </div>
               </div>

@@ -302,4 +302,11 @@ export interface AppConfig {
     apiKey: string;
   };
   appUrl?: string; // Custom domain for the app link
+  socialLinks?: {
+    facebook?: string;
+    instagram?: string;
+    website?: string;
+    whatsapp?: string;
+    email?: string;
+  };
 }

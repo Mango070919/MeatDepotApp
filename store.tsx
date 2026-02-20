@@ -549,20 +549,50 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const restoreData = (data: any) => {
+    let restoredSections = [];
+    
     if(data.products) {
         // Run expiry validation on restored products
         const validated = checkAndExpireSpecials(data.products);
         setProducts(validated);
+        restoredSections.push('Products');
     }
-    if(data.users) setUsers(data.users);
-    if(data.orders) setOrders(data.orders);
-    if(data.posts) setPosts(data.posts);
-    if(data.promoCodes) setPromoCodes(data.promoCodes);
-    if(data.activityLogs) setActivityLogs(data.activityLogs);
-    if(data.rawMaterials) setRawMaterials(data.rawMaterials);
-    if(data.productionBatches) setProductionBatches(data.productionBatches);
-    if(data.config) setConfig(prev => ({ ...prev, ...data.config }));
-    logActivity('SYNC', 'Full system restore executed');
+    if(data.users) {
+        setUsers(data.users);
+        restoredSections.push('Users');
+    }
+    if(data.orders) {
+        setOrders(data.orders);
+        restoredSections.push('Orders');
+    }
+    if(data.posts) {
+        setPosts(data.posts);
+        restoredSections.push('Posts');
+    }
+    if(data.promoCodes) {
+        setPromoCodes(data.promoCodes);
+        restoredSections.push('Promo Codes');
+    }
+    if(data.activityLogs) {
+        setActivityLogs(data.activityLogs);
+        restoredSections.push('Activity Logs');
+    }
+    if(data.rawMaterials) {
+        setRawMaterials(data.rawMaterials);
+        restoredSections.push('Raw Materials');
+    }
+    if(data.productionBatches) {
+        setProductionBatches(data.productionBatches);
+        restoredSections.push('Production Batches');
+    }
+    if(data.config) {
+        setConfig(prev => ({ ...prev, ...data.config }));
+        restoredSections.push('Config');
+    }
+    
+    if (restoredSections.length > 0) {
+        logActivity('SYNC', `System restore executed for: ${restoredSections.join(', ')}`);
+    }
   };
 
   const finalConfig = (isPreviewMode && previewData?.config) ? previewData.config : config;

@@ -103,5 +103,12 @@ export const INITIAL_CONFIG: AppConfig = {
       url: 'https://meatdepot.co.za/wp-json/md-app/v1', // Absolute path to WP Plugin Endpoint
       apiKey: '' // User to set this in App Settings
   },
-  appUrl: 'https://meatdepot.co.za/order-app/'
+  appUrl: 'https://meatdepot.co.za/order-app/',
+  socialLinks: {
+    facebook: 'https://facebook.com/meatdepotgq',
+    instagram: 'https://www.instagram.com/meatdepotgq/',
+    website: 'https://meatdepot.co.za',
+    whatsapp: 'https://wa.me/844012488038318',
+    email: 'admin@meatdepot.co.za'
+  }
 };

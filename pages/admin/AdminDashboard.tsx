@@ -200,6 +200,11 @@ const AdminDashboard: React.FC = () => {
               <div><h3 className="text-xl font-bold text-white">App Manager</h3><p className="text-xs text-gray-500 font-bold uppercase tracking-wider">AI Console & Sync</p></div>
           </button>
 
+          <button onClick={() => navigate('/admin/settings')} className="p-6 bg-white rounded-3xl border border-gray-100 shadow-sm hover:border-[#f4d300] transition-colors text-left flex flex-col justify-between h-40 group">
+              <div className="p-3 bg-gray-50 w-fit rounded-2xl text-gray-600 group-hover:bg-[#f4d300] group-hover:text-black transition-colors"><Settings size={24} /></div>
+              <div><h3 className="text-xl font-bold text-gray-900">Settings</h3><p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Backup & Config</p></div>
+          </button>
+
           {hasPermission('orders') && (
               <button onClick={() => navigate('/admin/orders')} className="p-6 bg-white rounded-3xl border border-gray-100 shadow-sm hover:border-[#f4d300] transition-colors text-left flex flex-col justify-between h-40 group">
                   <div className="p-3 bg-gray-50 w-fit rounded-2xl text-gray-600 group-hover:bg-[#f4d300] group-hover:text-black transition-colors"><ShoppingBag size={24} /></div>

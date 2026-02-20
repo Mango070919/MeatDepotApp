@@ -426,44 +426,17 @@ const Home: React.FC = () => {
           <h2 className="brand-font text-4xl font-bold italic text-white">Latest News</h2>
           <div className="h-1.5 w-20 bg-[#f4d300]"></div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {orderedPosts.slice(0, 3).map((post) => post && (
-            <div key={post.id} className={`relative bg-[#121212] rounded-[40px] border border-white/5 overflow-hidden shadow-2xl group ${!post.visible && !isAdmin ? 'hidden' : ''}`}>
-               {isAdmin && !post.visible && (
-                   <div className="absolute top-4 left-4 z-20 bg-red-600 text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest shadow-lg flex items-center gap-1">
-                       <EyeOff size={10} /> Hidden
-                   </div>
-               )}
-               
-              <img src={post.imageUrl} alt="Post image" className={`h-60 w-full object-cover ${!post.visible ? 'grayscale opacity-40' : ''}`} />
-              
-              {isAdmin && (
-                  <div className="absolute top-4 right-4 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <div className="group/menu relative">
-                          <button className="p-2 bg-black/60 backdrop-blur-md rounded-full text-white hover:bg-[#f4d300] hover:text-black transition-colors">
-                              <Settings size={18} />
-                          </button>
-                          <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-xl py-2 hidden group-hover/menu:block">
-                              <button onClick={() => hidePost(post.id)} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 font-bold flex items-center gap-2">
-                                  <EyeOff size={14}/> Hide from Home
-                              </button>
-                              <button onClick={() => deletePostPermanently(post.id)} className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 font-bold flex items-center gap-2">
-                                  <Trash2 size={14}/> Delete Permanently
-                              </button>
-                          </div>
-                      </div>
-                  </div>
-              )}
-
-              <div className="p-8 space-y-4">
-                <p className="text-sm text-white/70 leading-relaxed">{post.caption}</p>
-                <div className="flex justify-between items-center pt-4 border-t border-white/10">
-                  <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest">{new Date(post.timestamp).toLocaleDateString()}</span>
-                  <Heart size={20} className="text-white/20 hover:text-[#f4d300] hover:fill-[#f4d300] transition-colors" />
-                </div>
-              </div>
-            </div>
-          ))}
+        <div className="w-full bg-white rounded-[20px] overflow-hidden">
+            <iframe 
+                src="https://www.facebook.com/plugins/page.php?href=https%3A%2F%2Fwww.facebook.com%2Fmeatdepotgq&tabs=timeline&width=500&height=800&small_header=false&adapt_container_width=true&hide_cover=false&show_facepile=true&appId" 
+                width="100%" 
+                height="800" 
+                style={{ border: 'none', overflow: 'hidden' }} 
+                scrolling="no" 
+                frameBorder="0" 
+                allowFullScreen={true} 
+                allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+            ></iframe>
         </div>
       </section>
   );

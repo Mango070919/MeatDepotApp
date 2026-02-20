@@ -1,6 +1,6 @@
 
 import { initializeApp } from 'firebase/app';
-import { getFirestore, doc, setDoc, getDoc } from 'firebase/firestore';
+import { getFirestore, doc, setDoc, getDoc, enableIndexedDbPersistence } from 'firebase/firestore';
 import { getStorage, ref, uploadString, getDownloadURL, deleteObject } from 'firebase/storage';
 import { AppConfig } from '../types';
 
@@ -18,6 +18,16 @@ export const initFirebase = (config: AppConfig) => {
       try {
         app = initializeApp(config.firebaseConfig);
         db = getFirestore(app);
+        
+        // Enable Offline Persistence
+        enableIndexedDbPersistence(db).catch((err) => {
+            if (err.code == 'failed-precondition') {
+                console.warn("Firebase persistence failed: Multiple tabs open");
+            } else if (err.code == 'unimplemented') {
+                console.warn("Firebase persistence not supported by browser");
+            }
+        });
+
         storage = getStorage(app);
         console.log("Firebase Initialized Successfully");
         return true;
@@ -126,8 +136,12 @@ export const loadStateFromFirebase = async () => {
             console.log("State loaded from Firebase successfully.");
             return combinedState;
         }
-    } catch (e) {
-        console.error("Firebase Load Error:", e);
+    } catch (e: any) {
+        if (e.code === 'unavailable') {
+            console.warn("Firebase is offline. Using local state.");
+        } else {
+            console.error("Firebase Load Error:", e);
+        }
     }
     return null;
 };
