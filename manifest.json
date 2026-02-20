@@ -1,0 +1,29 @@
+
+{
+  "name": "Meat Depot",
+  "short_name": "Meat Depot",
+  "description": "Gqeberha's Premium Online Butchery. Order fresh cuts, biltong, and braai packs.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#f4d300",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "https://meatdepot.co.za/wp-content/uploads/2026/02/webapp.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://meatdepot.co.za/wp-content/uploads/2026/02/webapp.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "https://meatdepot.co.za/wp-content/uploads/2026/02/webapp.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

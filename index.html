@@ -1,0 +1,149 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Meat Depot | Gqeberha's Premium Butchery</title>
+
+    <link rel="manifest" href="/manifest.json" />
+    <!-- PWA Icons -->
+    <link rel="apple-touch-icon" href="https://meatdepot.co.za/wp-content/uploads/2026/02/app_logo.webp" />
+    <link rel="icon" type="image/webp" href="https://meatdepot.co.za/wp-content/uploads/2026/02/app_logo.webp" />
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Meat Depot">
+    <meta name="theme-color" content="#f4d300" />
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              brand: {
+                yellow: '#f4d300',
+              }
+            }
+          }
+        }
+      }
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.bunny.net/css?family=century-gothic:400,700" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Roboto:wght@400;700&family=Lato:wght@400;700&family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+
+    <style>
+      :root {
+        --brand-yellow: #f4d300;
+        --brand-black: #000000;
+        --brand-dark-gray: #121212;
+      }
+      body {
+        background-color: var(--brand-black);
+        color: #ffffff;
+        -webkit-tap-highlight-color: transparent;
+      }
+      
+      /* GLOBAL INPUT FIX */
+      input, textarea, select {
+        color: #000000 !important; /* Force black text */
+        background-color: #ffffff;
+        caret-color: #f4d300;
+      }
+      input::placeholder, textarea::placeholder {
+        color: #6b7280 !important; /* Tailwind gray-500 */
+      }
+      input:disabled, textarea:disabled, select:disabled {
+        background-color: #e5e7eb; /* Gray-200 */
+        color: #4b5563 !important; /* Gray-600 */
+        cursor: not-allowed;
+      }
+      /* Dark mode overrides if specific bg classes are used */
+      .dark-input {
+        background-color: #1f2937 !important;
+        color: #ffffff !important;
+      }
+
+      .font-main {
+         font-family: 'Century Gothic', sans-serif;
+      }
+      .brand-font {
+        font-family: 'Century Gothic', sans-serif;
+      }
+      .script-font {
+        font-family: 'Dancing Script', cursive;
+      }
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+      .meat-gradient {
+        background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.95) 100%);
+      }
+      .glass {
+        background: rgba(18, 18, 18, 0.85);
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+      }
+      .logo-yellow {
+        color: var(--brand-yellow);
+      }
+      input:focus, select:focus, textarea:focus {
+        outline: none;
+        border-color: var(--brand-yellow) !important;
+      }
+      ::selection {
+        background: var(--brand-yellow);
+        color: var(--brand-black);
+      }
+
+      /* Thermal Printer Styles (80mm) */
+      @media print {
+        @page { margin: 0; size: 80mm auto; }
+        body * { visibility: hidden; }
+        #receipt-print-area, #receipt-print-area * { 
+          visibility: visible; 
+          color: black !important;
+        }
+        #receipt-print-area { 
+          position: absolute; 
+          left: 0; 
+          top: 0; 
+          width: 80mm; /* Standard Thermal Width */
+          margin: 0;
+          padding: 10px;
+          background: white;
+        }
+        .no-print { display: none !important; }
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react/": "https://esm.sh/react@^19.2.4/",
+    "react": "https://esm.sh/react@^19.2.4",
+    "react-router-dom": "https://esm.sh/react-router-dom@6.28.0",
+    "lucide-react": "https://esm.sh/lucide-react@^0.563.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+    "@google/genai": "https://esm.sh/@google/genai@^1.41.0",
+    "qrcode": "https://esm.sh/qrcode@1.5.3",
+    "firebase/": "https://esm.sh/firebase@^12.9.0/",
+    "vite": "https://esm.sh/vite@^7.3.1",
+    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.4"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body class="font-main">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
