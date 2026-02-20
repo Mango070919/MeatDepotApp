@@ -1,8 +1,9 @@
+
 <?php
 /**
  * Plugin Name: Meat Depot App Backend
  * Description: Provides REST API endpoints for the Meat Depot React App to sync data and upload images.
- * Version: 1.0
+ * Version: 1.1
  * Author: Meat Depot Systems
  */
 
@@ -18,11 +19,19 @@ class MeatDepotAppBackend {
         add_action('admin_menu', array($this, 'add_admin_menu'));
         add_action('admin_init', array($this, 'register_settings'));
         
-        // CORS support
+        // CORS and Cache Control support
         add_action('init', function() {
+            // CORS
             header("Access-Control-Allow-Origin: *");
             header("Access-Control-Allow-Methods: POST, GET, OPTIONS, PUT, DELETE");
             header("Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept, X-API-Key");
+            
+            // Cache Control - Crucial for app sync
+            if (strpos($_SERVER['REQUEST_URI'], 'md-app/v1/sync') !== false) {
+                header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+                header("Cache-Control: post-check=0, pre-check=0", false);
+                header("Pragma: no-cache");
+            }
         });
     }
 
@@ -59,17 +68,29 @@ class MeatDepotAppBackend {
     }
 
     public function get_data() {
+        // Explicitly prevent caching for the response object as well
+        $response = new WP_REST_Response();
+        $response->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+        $response->header('Pragma', 'no-cache');
+
         // We store data in a JSON file in uploads directory to avoid DB bloat
         $upload_dir = wp_upload_dir();
         $file_path = $upload_dir['basedir'] . '/md-app/data.json';
 
         if (file_exists($file_path)) {
+            // Clear file stat cache to ensure we get the latest file modification
+            clearstatcache(true, $file_path);
+            
             $json = file_get_contents($file_path);
             $data = json_decode($json, true);
-            return new WP_REST_Response($data, 200);
+            $response->set_data($data);
+            $response->set_status(200);
+            return $response;
         }
 
-        return new WP_REST_Response(new stdClass(), 200);
+        $response->set_data(new stdClass());
+        $response->set_status(200);
+        return $response;
     }
 
     public function save_data($request) {
@@ -89,16 +110,16 @@ class MeatDepotAppBackend {
         $file_path = $app_dir . '/data.json';
         
         // Merge with existing data to prevent partial overwrites if needed
-        // For this app architecture, the client sends partial updates usually, 
-        // but sometimes full state. The app logic handles merging, so here we assume
-        // the client sends what needs to be stored.
-        // However, to be safe, let's load existing, merge, save.
-        
         $current_data = array();
         if (file_exists($file_path)) {
             $current_data = json_decode(file_get_contents($file_path), true);
         }
         
+        // If current data isn't an array (e.g. null or first run), default to empty array
+        if (!is_array($current_data)) {
+            $current_data = array();
+        }
+
         $new_data = array_merge($current_data, $params);
         $saved = file_put_contents($file_path, json_encode($new_data));
 

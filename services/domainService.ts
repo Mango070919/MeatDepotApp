@@ -31,7 +31,8 @@ export const saveToDomain = async (data: any, config: AppConfig) => {
 export const loadFromDomain = async (config: AppConfig) => {
     if (!config.customDomain?.url) return null;
     try {
-        const res = await fetch(`${config.customDomain.url}/sync`, {
+        // Add timestamp to prevent caching
+        const res = await fetch(`${config.customDomain.url}/sync?_t=${Date.now()}`, {
             headers: { 'X-API-Key': config.customDomain.apiKey }
         });
         if (res.ok) {

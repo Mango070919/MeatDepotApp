@@ -2,7 +2,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useApp } from '../../store';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, Star, ShoppingCart, Heart, Facebook, Instagram, Coins, Settings, EyeOff, Trash2, Edit2, AlertTriangle, X, Trophy, Medal, Eye, User as UserIcon, Save, Palette } from 'lucide-react';
+import { ArrowRight, Star, ShoppingCart, Heart, Facebook, Instagram, Coins, Settings, EyeOff, Trash2, Edit2, AlertTriangle, X, Trophy, Medal, Eye, User as UserIcon, Save, Palette, Repeat } from 'lucide-react';
 import { UserRole } from '../../types';
 
 // Helper for YouTube embed
@@ -326,25 +326,34 @@ const Home: React.FC = () => {
       </section>
   );
 
-  const renderCategories = () => (
+  const renderCategories = () => {
+      const hasPastOrders = currentUser && orders.some(o => o.customerId === currentUser.id);
+      const categories = ['Biltong', 'Steaks', 'Braai Packs', 'Specials'];
+      if (hasPastOrders) {
+          categories.unshift('Buy Again');
+      }
+
+      return (
       <section className="space-y-6 px-2 mb-12">
         <div className="space-y-1">
           <h2 className="script-font text-5xl text-[#f4d300] -rotate-1">The Depot</h2>
           <p className="text-white/30 text-[9px] font-bold tracking-[0.4em] uppercase">Our Finest Selections</p>
         </div>
         <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar">
-          {['Biltong', 'Steaks', 'Braai Packs', 'Specials'].map((cat) => (
+          {categories.map((cat) => (
             <button
               key={cat}
               onClick={() => navigate(`/shop?category=${cat}`)}
-              className="flex-shrink-0 px-10 py-5 bg-white/5 border border-white/10 rounded-2xl font-bold text-[10px] tracking-[0.2em] text-white/70 hover:border-[#f4d300] hover:text-[#f4d300] transition-all uppercase"
+              className={`flex-shrink-0 px-10 py-5 bg-white/5 border border-white/10 rounded-2xl font-bold text-[10px] tracking-[0.2em] text-white/70 hover:border-[#f4d300] hover:text-[#f4d300] transition-all uppercase flex items-center gap-2 ${cat === 'Buy Again' ? 'border-[#f4d300] text-[#f4d300]' : ''}`}
             >
+              {cat === 'Buy Again' && <Repeat size={14} />}
               {cat}
             </button>
           ))}
         </div>
       </section>
-  );
+      );
+  };
 
   const renderFeatured = () => (
       <section className="space-y-10 px-2 mb-12">

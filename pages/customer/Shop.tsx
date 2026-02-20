@@ -451,17 +451,19 @@ const Shop: React.FC = () => {
             FAVORITES
           </button>
 
-          <button 
-            onClick={() => switchCategory('Buy Again')}
-            className={`px-8 py-4 rounded-full text-[9px] font-bold tracking-widest uppercase transition-all whitespace-nowrap border-2 flex items-center gap-2 ${
-              activeCategory === 'Buy Again' 
-              ? 'bg-[#f4d300] border-[#f4d300] text-black shadow-xl shadow-[#f4d300]/20' 
-              : 'bg-white/5 border-white/5 text-white/40 hover:border-white/10'
-            }`}
-          >
-            <Repeat size={12} />
-            BUY AGAIN
-          </button>
+          {currentUser && orders.some(o => o.customerId === currentUser.id) && (
+            <button 
+              onClick={() => switchCategory('Buy Again')}
+              className={`px-8 py-4 rounded-full text-[9px] font-bold tracking-widest uppercase transition-all whitespace-nowrap border-2 flex items-center gap-2 ${
+                activeCategory === 'Buy Again' 
+                ? 'bg-[#f4d300] border-[#f4d300] text-black shadow-xl shadow-[#f4d300]/20' 
+                : 'bg-white/5 border-white/5 text-white/40 hover:border-white/10'
+              }`}
+            >
+              <Repeat size={12} />
+              BUY AGAIN
+            </button>
+          )}
 
           {CATEGORIES.map(cat => (
             <button 

@@ -209,9 +209,9 @@ const AIAssistant: React.FC = () => {
                 {/* Output Area */}
                 <div className="flex-1 p-8 font-mono text-sm space-y-6 overflow-y-auto">
                     <div className="text-green-400">
-                        > System Initialized.<br/>
-                        > Connected to Store State.<br/>
-                        > Ready for instructions (Products, Users, Orders, Config).
+                        &gt; System Initialized.<br/>
+                        &gt; Connected to Store State.<br/>
+                        &gt; Ready for instructions (Products, Users, Orders, Config).
                     </div>
                     {result && (
                         <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
