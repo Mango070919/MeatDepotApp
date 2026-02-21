@@ -238,6 +238,7 @@ export interface AppConfig {
   paymentEnabled: boolean; // Toggles the "Request Payment Link" flow
   deliveryFee: number; // Base fee or Flat fee fallback
   deliveryRatePerKm?: number; // Variable rate per kilometer
+  deliveryCalculationMethod?: 'FIXED' | 'DISTANCE'; // New field
   minimumOrder: number;
   collectionInstructions: string;
   homepageBanners: string[]; // Can be Image URL or YouTube URL

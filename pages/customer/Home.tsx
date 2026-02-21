@@ -2,8 +2,44 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useApp } from '../../store';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, Star, ShoppingCart, Heart, Facebook, Instagram, Coins, Settings, EyeOff, Trash2, Edit2, AlertTriangle, X, Trophy, Medal, Eye, User as UserIcon, Save, Palette, Repeat } from 'lucide-react';
+import { ArrowRight, Star, ShoppingCart, Heart, Facebook, Instagram, Coins, Settings, EyeOff, Trash2, Edit2, AlertTriangle, X, Trophy, Medal, Eye, User as UserIcon, Save, Palette, Repeat, Camera, Loader2 } from 'lucide-react';
 import { UserRole } from '../../types';
+import { uploadFile } from '../../services/storageService';
+
+const resizeImage = (file: File, maxWidth: number, maxHeight: number): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target?.result as string;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        if (width > height) {
+          if (width > maxWidth) {
+            height *= maxWidth / width;
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width *= maxHeight / height;
+            height = maxHeight;
+          }
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return reject(new Error('Could not get canvas context'));
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', 0.85));
+      };
+      img.onerror = (error) => reject(error);
+    };
+    reader.onerror = (error) => reject(error);
+  });
+};
 
 // Helper for YouTube embed
 const getYoutubeEmbedUrl = (url: string) => {
@@ -24,6 +60,7 @@ const Home: React.FC = () => {
 
   const [showNoticeEdit, setShowNoticeEdit] = useState(false);
   const [noticeUrl, setNoticeUrl] = useState(config.topNotice?.imageUrl || '');
+  const [isUploading, setIsUploading] = useState(false);
   
   // Leaderboard Edit States
   const [isEditingLeaderboard, setIsEditingLeaderboard] = useState(false);
@@ -161,6 +198,27 @@ const Home: React.FC = () => {
               visible: !(config.topNotice?.visible ?? true)
           }
       });
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      try {
+        setIsUploading(true);
+        const resizedImageBase64 = await resizeImage(file, 1200, 800);
+        
+        let url = resizedImageBase64;
+        if (config.backupMethod === 'CUSTOM_DOMAIN' || (config.googleDrive?.accessToken && config.googleDrive?.folderId)) {
+            const uploadedUrl = await uploadFile(resizedImageBase64, `notice_${Date.now()}.jpg`, config);
+            if (uploadedUrl) url = uploadedUrl;
+        }
+        setNoticeUrl(url);
+      } catch (error) {
+        alert("Upload failed.");
+      } finally {
+        setIsUploading(false);
+      }
+    }
   };
 
   const saveLeaderboardSettings = async () => {
@@ -426,12 +484,12 @@ const Home: React.FC = () => {
           <h2 className="brand-font text-4xl font-bold italic text-white">Latest News</h2>
           <div className="h-1.5 w-20 bg-[#f4d300]"></div>
         </div>
-        <div className="w-full bg-white rounded-[20px] overflow-hidden">
+        <div className="w-full bg-white rounded-[20px] overflow-hidden flex justify-center">
             <iframe 
                 src="https://www.facebook.com/plugins/page.php?href=https%3A%2F%2Fwww.facebook.com%2Fmeatdepotgq&tabs=timeline&width=500&height=800&small_header=false&adapt_container_width=true&hide_cover=false&show_facepile=true&appId" 
                 width="100%" 
                 height="800" 
-                style={{ border: 'none', overflow: 'hidden' }} 
+                style={{ border: 'none', overflow: 'hidden', maxWidth: '500px' }} 
                 scrolling="no" 
                 frameBorder="0" 
                 allowFullScreen={true} 
@@ -491,6 +549,10 @@ const Home: React.FC = () => {
                       <div className="w-full max-w-lg flex flex-col gap-4">
                           <h3 className="text-white font-bold">Update Notice Image</h3>
                           <div className="flex gap-2">
+                              <label className="bg-white/10 text-white px-4 rounded-xl flex items-center justify-center cursor-pointer hover:bg-white/20 transition-colors">
+                                  {isUploading ? <Loader2 className="animate-spin" size={20}/> : <Camera size={20}/>}
+                                  <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} disabled={isUploading} />
+                              </label>
                               <input 
                                  value={noticeUrl}
                                  onChange={(e) => setNoticeUrl(e.target.value)}
@@ -500,7 +562,7 @@ const Home: React.FC = () => {
                               <button onClick={handleNoticeSave} className="bg-[#f4d300] text-black px-6 rounded-xl font-bold text-xs uppercase tracking-widest">SAVE</button>
                               <button onClick={() => setShowNoticeEdit(false)} className="bg-white/10 text-white px-4 rounded-xl"><X size={20}/></button>
                           </div>
-                          <p className="text-[10px] text-white/40">Paste a URL or upload via Admin Settings &gt; Files first.</p>
+                          <p className="text-[10px] text-white/40">Upload an image or paste a URL.</p>
                       </div>
                   </div>
               )}

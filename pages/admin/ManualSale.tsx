@@ -77,7 +77,9 @@ const ManualSale: React.FC = () => {
       }, 0);
   };
 
-  const deliveryFee = deliveryType === 'DELIVERY' ? (distance * (config.deliveryRatePerKm || 10)) : 0;
+  const deliveryFee = deliveryType === 'DELIVERY' 
+      ? (config.deliveryCalculationMethod === 'DISTANCE' ? (distance * (config.deliveryRatePerKm || 10)) : config.deliveryFee) 
+      : 0;
   const total = calculateSubtotal() + deliveryFee;
 
   const getOrderObject = () => {

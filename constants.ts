@@ -38,6 +38,7 @@ export const INITIAL_CONFIG: AppConfig = {
   paymentEnabled: false,
   deliveryFee: 50, // Base/Flat Fee
   deliveryRatePerKm: 10, // R10 per KM default
+  deliveryCalculationMethod: 'FIXED',
   minimumOrder: 250,
   collectionInstructions: 'Collection in Westering- Address will be shared on WhatsApp during the ordering process',
   homepageBanners: [

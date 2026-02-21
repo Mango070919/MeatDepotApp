@@ -384,22 +384,42 @@ const Settings: React.FC = () => {
                 <div><h2 className="text-xl font-bold text-gray-900">Services & Logistics</h2><p className="text-xs text-gray-500 font-medium">Delivery Fees & Features.</p></div>
           </div>
           <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Delivery Rate (Per KM)</label>
-                      <div className="relative">
-                          <input 
-                              type="number" 
-                              className="w-full p-3 pl-8 bg-gray-50 text-gray-900 rounded-xl border border-gray-200 outline-none focus:ring-1 focus:ring-[#f4d300] text-sm font-bold" 
-                              value={formData.deliveryRatePerKm || ''} 
-                              onChange={(e) => setFormData({ ...formData, deliveryRatePerKm: Number(e.target.value) })} 
-                              placeholder="e.g. 10" 
-                          />
-                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold">R</span>
-                      </div>
+              <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Delivery Fee Calculation</label>
+                  <div className="flex bg-gray-50 p-1 rounded-xl border border-gray-200">
+                      <button 
+                          onClick={() => setFormData({ ...formData, deliveryCalculationMethod: 'FIXED' })}
+                          className={`flex-1 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${(!formData.deliveryCalculationMethod || formData.deliveryCalculationMethod === 'FIXED') ? 'bg-white text-black shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                      >
+                          Fixed Fee
+                      </button>
+                      <button 
+                          onClick={() => setFormData({ ...formData, deliveryCalculationMethod: 'DISTANCE' })}
+                          className={`flex-1 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${formData.deliveryCalculationMethod === 'DISTANCE' ? 'bg-white text-black shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                      >
+                          Distance Based
+                      </button>
                   </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {formData.deliveryCalculationMethod === 'DISTANCE' && (
+                      <div className="space-y-2 animate-in fade-in">
+                          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Delivery Rate (Per KM)</label>
+                          <div className="relative">
+                              <input 
+                                  type="number" 
+                                  className="w-full p-3 pl-8 bg-gray-50 text-gray-900 rounded-xl border border-gray-200 outline-none focus:ring-1 focus:ring-[#f4d300] text-sm font-bold" 
+                                  value={formData.deliveryRatePerKm || ''} 
+                                  onChange={(e) => setFormData({ ...formData, deliveryRatePerKm: Number(e.target.value) })} 
+                                  placeholder="e.g. 10" 
+                              />
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold">R</span>
+                          </div>
+                      </div>
+                  )}
                   <div className="space-y-2">
-                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Base / Min Delivery Fee</label>
+                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{formData.deliveryCalculationMethod === 'DISTANCE' ? 'Base / Min Delivery Fee' : 'Fixed Delivery Fee'}</label>
                       <div className="relative">
                           <input 
                               type="number" 

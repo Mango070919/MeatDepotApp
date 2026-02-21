@@ -49,8 +49,18 @@ const Cart: React.FC = () => {
   
   // Apply Promo Logic
   let discountAmount = 0;
-  // Use calculated fee if available (GPS based), else fallback to base fee
-  let finalDeliveryFee = deliveryType === 'DELIVERY' ? (distanceKm > 0 ? calculatedDeliveryFee : config.deliveryFee) : 0;
+  
+  // Delivery Fee Calculation
+  let finalDeliveryFee = 0;
+  if (deliveryType === 'DELIVERY') {
+      if (config.deliveryCalculationMethod === 'DISTANCE' && distanceKm > 0) {
+          // If distance based, use the greater of (Distance * Rate) or Base Fee
+          finalDeliveryFee = Math.max(calculatedDeliveryFee, config.deliveryFee);
+      } else {
+          // Fixed Fee or fallback
+          finalDeliveryFee = config.deliveryFee;
+      }
+  }
 
   if (appliedCode) {
       if (appliedCode.type === 'PERCENTAGE_OFF') {
@@ -387,7 +397,7 @@ const Cart: React.FC = () => {
                                     <div>
                                         <p className="text-green-500 text-xs font-bold">Location Verified</p>
                                         <p className="text-white/60 text-[10px]">{address}</p>
-                                        <p className="text-white/40 text-[10px] mt-1">Distance: {distanceKm.toFixed(1)}km | Fee: R{calculatedDeliveryFee.toFixed(2)}</p>
+                                        <p className="text-white/40 text-[10px] mt-1">Distance: {distanceKm.toFixed(1)}km | Fee: R{finalDeliveryFee.toFixed(2)}</p>
                                     </div>
                                 </div>
                             )}
