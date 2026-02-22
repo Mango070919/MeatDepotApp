@@ -27,8 +27,8 @@ async function startServer() {
       return res.status(400).json({ success: false, message: "Invalid order data or missing email" });
     }
 
-    const emailUser = process.env.EMAIL_USER;
-    const emailPass = process.env.EMAIL_PASS;
+    const emailUser = config.emailConfig?.user;
+    const emailPass = config.emailConfig?.pass;
 
     if (!emailUser || !emailPass) {
       console.warn("Email credentials missing. Skipping email send.");

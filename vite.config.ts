@@ -1,10 +1,19 @@
-// vite.config.ts
-import { defineConfig } from 'vite';
 
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+
+// https://vitejs.dev/config/
 export default defineConfig({
-  // other configurations...
-  define: {
-    'process.env.API_KEY': JSON.stringify(process.env.API_KEY),
+  plugins: [react()],
+  // CHANGE: Using './' makes the app flexible. It will work in ANY folder you upload it to.
+  base: './', 
+  build: {
+    outDir: 'dist',
+    sourcemap: false
   },
-  // other configurations...
+  define: {
+    // API Key injected directly for production
+    'process.env.API_KEY': JSON.stringify(process.env.API_KEY || "AIzaSyBrakc0k8b0qiBqYWGMA-Jmg6m8Xp5bk-k"),
+    'process.env': process.env
+  }
 });

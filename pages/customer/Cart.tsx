@@ -123,7 +123,7 @@ const Cart: React.FC = () => {
       setAddressError('');
       setIsAddressVerified(false);
 
-      const result = await validateAddress(searchQuery, config.deliveryAreas);
+      const result = await validateAddress(searchQuery, config.deliveryAreas, config);
       
       if (result.error) {
           setAddressError(result.error);
@@ -154,7 +154,7 @@ const Cart: React.FC = () => {
       setAddressError('');
       navigator.geolocation.getCurrentPosition(
           async (position) => {
-              const result = await validateAddress('', config.deliveryAreas, {
+              const result = await validateAddress('', config.deliveryAreas, config, {
                   lat: position.coords.latitude,
                   lng: position.coords.longitude
               });

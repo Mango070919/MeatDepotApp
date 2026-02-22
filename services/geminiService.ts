@@ -3,7 +3,10 @@ import { GoogleGenAI, FunctionDeclaration, Type } from "@google/genai";
 import { Product, AppConfig, PromoCode, User, Order, Post, UserRole, OrderStatus } from "../types";
 import { CUSTOMER_DATABASE_SHEET } from "../constants";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const getAI = (apiKey?: string) => {
+    const key = apiKey || '';
+    return new GoogleGenAI({ apiKey: key });
+};
 
 const tools: FunctionDeclaration[] = [
   {
@@ -117,6 +120,7 @@ export const generateAIAssistance = async (
   ctx: AIContext
 ) => {
   try {
+    const ai = getAI(ctx.config.geminiApiKey);
     const model = 'gemini-2.5-flash';
     
     // Construct context summary
@@ -263,8 +267,9 @@ export interface AddressValidationResult {
     coordinates?: { lat: number, lng: number };
 }
 
-export const validateAddress = async (query: string, allowedAreas: string[], latLng?: { lat: number, lng: number }): Promise<AddressValidationResult> => {
+export const validateAddress = async (query: string, allowedAreas: string[], config: AppConfig, latLng?: { lat: number, lng: number }): Promise<AddressValidationResult> => {
     try {
+        const ai = getAI(config.geminiApiKey);
         const model = 'gemini-2.5-flash';
         const storeOrigin = "63 Clarence Road, Westering, Gqeberha, South Africa";
         

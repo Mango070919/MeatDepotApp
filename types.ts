@@ -35,6 +35,11 @@ export interface BusinessDetails {
   contactNumber: string;
   email: string;
   bankingDetails: string;
+  bankName?: string;
+  accountName?: string;
+  accountNumber?: string;
+  branchCode?: string;
+  accountType?: string;
   invoiceFooterText: string;
 }
 
@@ -298,6 +303,15 @@ export interface AppConfig {
   };
   googleSheetUrl?: string;
   firebaseConfig?: FirebaseConfig;
+  geminiApiKey?: string;
+  emailConfig?: {
+    user: string;
+    pass: string;
+  };
+  adminCredentials?: {
+    username: string;
+    password?: string;
+  };
   backupMethod: 'GOOGLE_DRIVE' | 'CUSTOM_DOMAIN' | 'FIREBASE';
   customDomain: {
     url: string;

@@ -11,7 +11,7 @@ const AdminLogin: React.FC = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
-  const { login, users, currentUser } = useApp();
+  const { login, users, currentUser, config } = useApp();
   const navigate = useNavigate();
 
   // Reactive Navigation: Automatically redirect when currentUser is set
@@ -47,15 +47,18 @@ const AdminLogin: React.FC = () => {
         const inputPass = password; // Do not trim password to support spaces if needed
         let targetUser: any = null;
 
-        // --- CHECK 1: HARDCODED SUPER ADMIN (Master Key) ---
+        const adminUsername = config.adminCredentials?.username || ADMIN_CREDENTIALS.username;
+        const adminPassword = config.adminCredentials?.password || ADMIN_CREDENTIALS.password;
+
+        // --- CHECK 1: HARDCODED OR CONFIG ADMIN (Master Key) ---
         // This ensures access even if database is sync-lagged or corrupted
-        if (inputUser.toLowerCase() === ADMIN_CREDENTIALS.username.toLowerCase() && inputPass === ADMIN_CREDENTIALS.password) {
+        if (inputUser.toLowerCase() === adminUsername.toLowerCase() && inputPass === adminPassword) {
             const existingAdmin = users.find(u => u.id === 'admin');
             targetUser = {
                 id: 'admin',
-                name: 'MeatAdmin98',
-                email: 'admin@meatdepot.co.za',
-                phone: '0000000000',
+                name: config.businessDetails?.companyName || 'MeatAdmin98',
+                email: config.businessDetails?.email || 'admin@meatdepot.co.za',
+                phone: config.businessDetails?.contactNumber || '0000000000',
                 role: UserRole.ADMIN,
                 loyaltyPoints: 0,
                 profilePicture: existingAdmin?.profilePicture || DEFAULT_ADMIN_IMAGE,

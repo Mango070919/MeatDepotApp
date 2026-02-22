@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../store';
-import { Save, Briefcase, CreditCard, Database, FileCode, ClipboardCopy, Download, Upload, Copy, FileText, RotateCcw, X, Terminal, Loader2, Eye, Camera, Globe, Package, Truck, Flame, Server, HardDrive, Link, Mail } from 'lucide-react';
+import { Save, Briefcase, CreditCard, Database, FileCode, ClipboardCopy, Download, Upload, Copy, FileText, RotateCcw, X, Terminal, Loader2, Eye, Camera, Globe, Package, Truck, Flame, Server, HardDrive, Link, Mail, Key, Sparkles } from 'lucide-react';
 import { AppConfig, BusinessDetails } from '../../types';
 import { useNavigate } from 'react-router-dom';
 
@@ -358,28 +358,173 @@ const Settings: React.FC = () => {
           </div>
       </section>
 
-      {/* Email Notifications */}
+      {/* Security & Admin Access */}
       <section className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 space-y-6">
           <div className="flex items-center gap-3 border-b border-gray-100 pb-6">
-              <div className="bg-blue-600 p-3 rounded-2xl text-white"><Mail size={24} /></div>
-              <div><h2 className="text-xl font-bold text-gray-900">Email Notifications</h2><p className="text-xs text-gray-500 font-medium">Configure automated order confirmation emails.</p></div>
+              <div className="bg-red-600 p-3 rounded-2xl text-white"><X size={24} /></div>
+              <div><h2 className="text-xl font-bold text-gray-900">Security & Admin Access</h2><p className="text-xs text-gray-500 font-medium">Protect your admin dashboard with custom credentials.</p></div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Admin Username</label>
+                  <input 
+                      className="w-full p-3 bg-gray-50 text-gray-900 rounded-xl border border-gray-200 outline-none focus:ring-1 focus:ring-red-500 text-sm font-bold" 
+                      value={formData.adminCredentials?.username || ''} 
+                      onChange={(e) => setFormData({ ...formData, adminCredentials: { ...formData.adminCredentials!, username: e.target.value } })} 
+                      placeholder="e.g. MeatAdmin98" 
+                  />
+              </div>
+              <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Admin Password</label>
+                  <input 
+                      type="password"
+                      className="w-full p-3 bg-gray-50 text-gray-900 rounded-xl border border-gray-200 outline-none focus:ring-1 focus:ring-red-500 text-sm" 
+                      value={formData.adminCredentials?.password || ''} 
+                      onChange={(e) => setFormData({ ...formData, adminCredentials: { ...formData.adminCredentials!, password: e.target.value } })} 
+                      placeholder="••••••••" 
+                  />
+              </div>
+          </div>
+          <p className="text-[10px] text-gray-400">If left blank, the default credentials from the source code will be used. <strong>Highly recommended to change these for production.</strong></p>
+      </section>
+
+      {/* API & Service Credentials */}
+      <section className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 space-y-6">
+          <div className="flex items-center gap-3 border-b border-gray-100 pb-6">
+              <div className="bg-blue-600 p-3 rounded-2xl text-white"><Key size={24} /></div>
+              <div><h2 className="text-xl font-bold text-gray-900">API & Service Credentials</h2><p className="text-xs text-gray-500 font-medium">Configure external services like Email and AI.</p></div>
           </div>
 
           <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100 text-xs text-blue-800 flex gap-2">
               <Mail size={16} className="shrink-0"/>
               <p>
-                  <strong>Automated Emails:</strong> The system is configured to send order summaries to customers. 
-                  To enable this, you must set <code>EMAIL_USER</code> and <code>EMAIL_PASS</code> in your environment variables (e.g., Vercel Dashboard).
+                  <strong>Manual Configuration:</strong> You can now manage your API keys directly here. 
+                  These settings are stored in your main database (Google Sheets/Firebase).
               </p>
           </div>
 
-          <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100">
-                  <div>
-                      <p className="text-sm font-bold text-gray-900">Order Confirmation Emails</p>
-                      <p className="text-[10px] text-gray-500">Send an email to customers immediately after they place an order.</p>
+          <div className="space-y-6">
+              {/* Gemini AI */}
+              <div className="space-y-4 p-6 bg-gray-50 rounded-2xl border border-gray-100">
+                  <div className="flex items-center gap-2 text-gray-900 font-bold text-sm"><Sparkles size={16} className="text-purple-600"/> Gemini AI Configuration</div>
+                  <div className="space-y-2">
+                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Gemini API Key</label>
+                      <input 
+                          type="password"
+                          className="w-full p-3 bg-white text-gray-900 rounded-xl border border-gray-200 outline-none focus:ring-1 focus:ring-blue-500 text-sm font-mono" 
+                          value={formData.geminiApiKey || ''} 
+                          onChange={(e) => setFormData({ ...formData, geminiApiKey: e.target.value })} 
+                          placeholder="AIzaSy..." 
+                      />
+                      <p className="text-[10px] text-gray-400">Used for address validation and AI assistance.</p>
                   </div>
-                  <div className="text-green-600 font-bold text-[10px] uppercase tracking-widest bg-green-100 px-3 py-1 rounded-full">Active</div>
+              </div>
+
+              {/* Google Drive & Sheets */}
+              <div className="space-y-4 p-6 bg-gray-50 rounded-2xl border border-gray-100">
+                  <div className="flex items-center gap-2 text-gray-900 font-bold text-sm"><Database size={16} className="text-green-600"/> Google Drive & Sheets Configuration</div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Drive Access Token</label>
+                          <input 
+                              type="password"
+                              className="w-full p-3 bg-white text-gray-900 rounded-xl border border-gray-200 outline-none focus:ring-1 focus:ring-blue-500 text-sm font-mono" 
+                              value={formData.googleDrive?.accessToken || ''} 
+                              onChange={(e) => setFormData({ ...formData, googleDrive: { ...formData.googleDrive!, accessToken: e.target.value } })} 
+                              placeholder="ya29..." 
+                          />
+                      </div>
+                      <div className="space-y-2">
+                          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Drive Folder ID</label>
+                          <input 
+                              className="w-full p-3 bg-white text-gray-900 rounded-xl border border-gray-200 outline-none focus:ring-1 focus:ring-blue-500 text-sm font-mono" 
+                              value={formData.googleDrive?.folderId || ''} 
+                              onChange={(e) => setFormData({ ...formData, googleDrive: { ...formData.googleDrive!, folderId: e.target.value } })} 
+                              placeholder="1fWq..." 
+                          />
+                      </div>
+                      <div className="space-y-2 md:col-span-2">
+                          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Google Sheet URL / ID</label>
+                          <input 
+                              className="w-full p-3 bg-white text-gray-900 rounded-xl border border-gray-200 outline-none focus:ring-1 focus:ring-blue-500 text-sm" 
+                              value={formData.googleSheetUrl || ''} 
+                              onChange={(e) => setFormData({ ...formData, googleSheetUrl: e.target.value })} 
+                              placeholder="https://docs.google.com/spreadsheets/d/..." 
+                          />
+                      </div>
+                  </div>
+                  <p className="text-[10px] text-gray-400">Required for automated backups and synchronization with Google Sheets.</p>
+              </div>
+
+              {/* Email (SMTP) */}
+              <div className="space-y-4 p-6 bg-gray-50 rounded-2xl border border-gray-100">
+                  <div className="flex items-center gap-2 text-gray-900 font-bold text-sm"><Mail size={16} className="text-blue-600"/> Email (SMTP) Configuration</div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">SMTP User (Gmail)</label>
+                          <input 
+                              className="w-full p-3 bg-white text-gray-900 rounded-xl border border-gray-200 outline-none focus:ring-1 focus:ring-blue-500 text-sm" 
+                              value={formData.emailConfig?.user || ''} 
+                              onChange={(e) => setFormData({ ...formData, emailConfig: { user: e.target.value, pass: formData.emailConfig?.pass || '' } })} 
+                              placeholder="your-email@gmail.com" 
+                          />
+                      </div>
+                      <div className="space-y-2">
+                          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">App Password</label>
+                          <input 
+                              type="password"
+                              className="w-full p-3 bg-white text-gray-900 rounded-xl border border-gray-200 outline-none focus:ring-1 focus:ring-blue-500 text-sm" 
+                              value={formData.emailConfig?.pass || ''} 
+                              onChange={(e) => setFormData({ ...formData, emailConfig: { user: formData.emailConfig?.user || '', pass: e.target.value } })} 
+                              placeholder="xxxx xxxx xxxx xxxx" 
+                          />
+                      </div>
+                  </div>
+                  <p className="text-[10px] text-gray-400">For Gmail, use an "App Password" generated in your Google Account security settings.</p>
+              </div>
+          </div>
+      </section>
+
+      {/* Firebase Configuration */}
+      <section className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 space-y-6">
+          <div className="flex items-center gap-3 border-b border-gray-100 pb-6">
+              <div className="bg-orange-600 p-3 rounded-2xl text-white"><Flame size={24} /></div>
+              <div><h2 className="text-xl font-bold text-gray-900">Firebase Configuration</h2><p className="text-xs text-gray-500 font-medium">Real-time database and cloud storage.</p></div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">API Key</label>
+                  <input 
+                      className="w-full p-3 bg-gray-50 text-gray-900 rounded-xl border border-gray-200 outline-none focus:ring-1 focus:ring-orange-500 text-sm font-mono" 
+                      value={formData.firebaseConfig?.apiKey || ''} 
+                      onChange={(e) => setFormData({ ...formData, firebaseConfig: { ...formData.firebaseConfig!, apiKey: e.target.value } })} 
+                  />
+              </div>
+              <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Project ID</label>
+                  <input 
+                      className="w-full p-3 bg-gray-50 text-gray-900 rounded-xl border border-gray-200 outline-none focus:ring-1 focus:ring-orange-500 text-sm" 
+                      value={formData.firebaseConfig?.projectId || ''} 
+                      onChange={(e) => setFormData({ ...formData, firebaseConfig: { ...formData.firebaseConfig!, projectId: e.target.value } })} 
+                  />
+              </div>
+              <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Storage Bucket</label>
+                  <input 
+                      className="w-full p-3 bg-gray-50 text-gray-900 rounded-xl border border-gray-200 outline-none focus:ring-1 focus:ring-orange-500 text-sm" 
+                      value={formData.firebaseConfig?.storageBucket || ''} 
+                      onChange={(e) => setFormData({ ...formData, firebaseConfig: { ...formData.firebaseConfig!, storageBucket: e.target.value } })} 
+                  />
+              </div>
+              <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">App ID</label>
+                  <input 
+                      className="w-full p-3 bg-gray-50 text-gray-900 rounded-xl border border-gray-200 outline-none focus:ring-1 focus:ring-orange-500 text-sm font-mono" 
+                      value={formData.firebaseConfig?.appId || ''} 
+                      onChange={(e) => setFormData({ ...formData, firebaseConfig: { ...formData.firebaseConfig!, appId: e.target.value } })} 
+                  />
               </div>
           </div>
       </section>
@@ -496,7 +641,32 @@ const Settings: React.FC = () => {
               </div>
               <div className="space-y-2"><label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Company Name</label><input className="w-full p-3 bg-gray-50 text-gray-900 rounded-xl border border-gray-200 outline-none focus:ring-1 focus:ring-[#f4d300] text-sm font-bold" value={formData.businessDetails?.companyName || ''} onChange={(e) => updateBusinessDetails('companyName', e.target.value)} /></div>
               <div className="space-y-2"><label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Email</label><input className="w-full p-3 bg-gray-50 text-gray-900 rounded-xl border border-gray-200 outline-none focus:ring-1 focus:ring-[#f4d300] text-sm" value={formData.businessDetails?.email || ''} onChange={(e) => updateBusinessDetails('email', e.target.value)} /></div>
-              <div className="space-y-2 md:col-span-2"><label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Account Details (Banking)</label><textarea className="w-full p-3 bg-gray-50 text-gray-900 rounded-xl border border-gray-200 outline-none focus:ring-1 focus:ring-[#f4d300] text-sm" rows={4} value={formData.businessDetails?.bankingDetails || ''} onChange={(e) => updateBusinessDetails('bankingDetails', e.target.value)} /></div>
+              <div className="space-y-2 md:col-span-2">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Banking Details (Structured)</label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-gray-50 rounded-2xl border border-gray-200">
+                      <div className="space-y-1">
+                          <label className="text-[9px] font-bold text-gray-400 uppercase">Bank Name</label>
+                          <input className="w-full p-2 bg-white text-gray-900 rounded-lg border border-gray-200 outline-none focus:ring-1 focus:ring-[#f4d300] text-sm" value={formData.businessDetails?.bankName || ''} onChange={(e) => updateBusinessDetails('bankName', e.target.value)} placeholder="e.g. FNB" />
+                      </div>
+                      <div className="space-y-1">
+                          <label className="text-[9px] font-bold text-gray-400 uppercase">Account Name</label>
+                          <input className="w-full p-2 bg-white text-gray-900 rounded-lg border border-gray-200 outline-none focus:ring-1 focus:ring-[#f4d300] text-sm" value={formData.businessDetails?.accountName || ''} onChange={(e) => updateBusinessDetails('accountName', e.target.value)} placeholder="e.g. Meat Depot" />
+                      </div>
+                      <div className="space-y-1">
+                          <label className="text-[9px] font-bold text-gray-400 uppercase">Account Number</label>
+                          <input className="w-full p-2 bg-white text-gray-900 rounded-lg border border-gray-200 outline-none focus:ring-1 focus:ring-[#f4d300] text-sm" value={formData.businessDetails?.accountNumber || ''} onChange={(e) => updateBusinessDetails('accountNumber', e.target.value)} placeholder="e.g. 123456789" />
+                      </div>
+                      <div className="space-y-1">
+                          <label className="text-[9px] font-bold text-gray-400 uppercase">Branch Code</label>
+                          <input className="w-full p-2 bg-white text-gray-900 rounded-lg border border-gray-200 outline-none focus:ring-1 focus:ring-[#f4d300] text-sm" value={formData.businessDetails?.branchCode || ''} onChange={(e) => updateBusinessDetails('branchCode', e.target.value)} placeholder="e.g. 250655" />
+                      </div>
+                      <div className="space-y-1">
+                          <label className="text-[9px] font-bold text-gray-400 uppercase">Account Type</label>
+                          <input className="w-full p-2 bg-white text-gray-900 rounded-lg border border-gray-200 outline-none focus:ring-1 focus:ring-[#f4d300] text-sm" value={formData.businessDetails?.accountType || ''} onChange={(e) => updateBusinessDetails('accountType', e.target.value)} placeholder="e.g. Current" />
+                      </div>
+                  </div>
+              </div>
+              <div className="space-y-2 md:col-span-2"><label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Legacy / Custom Banking Notes</label><textarea className="w-full p-3 bg-gray-50 text-gray-900 rounded-xl border border-gray-200 outline-none focus:ring-1 focus:ring-[#f4d300] text-sm" rows={3} value={formData.businessDetails?.bankingDetails || ''} onChange={(e) => updateBusinessDetails('bankingDetails', e.target.value)} placeholder="Any additional payment instructions..." /></div>
           </div>
       </section>
 
