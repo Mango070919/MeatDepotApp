@@ -238,11 +238,27 @@ const Cart: React.FC = () => {
     if (isPaymentRequest) {
         // --- PAYMENT LINK REQUEST FLOW ---
         placeOrder(order, pointsToRedeem, appliedCode?.id);
+        
+        // Trigger Email
+        fetch('/api/send-order-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ order, config })
+        }).catch(console.error);
+
         setShowPaymentRequestModal(false);
         navigate('/payment/success'); // Reuse success page or create a specific "Request Sent" page
     } else {
         // --- WHATSAPP FLOW ---
         placeOrder(order, pointsToRedeem, appliedCode?.id);
+        
+        // Trigger Email
+        fetch('/api/send-order-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ order, config })
+        }).catch(console.error);
+
         playSound('success');
 
         const itemLines = cart.map(item => {

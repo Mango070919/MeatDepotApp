@@ -18,7 +18,8 @@ import {
   MessageSquare,
   GripVertical,
   Sparkles,
-  Send
+  Send,
+  Globe
 } from 'lucide-react';
 import { AppConfig } from '../../types';
 import { uploadFile } from '../../services/storageService';
@@ -83,7 +84,7 @@ const sectionLabels: Record<string, string> = {
     'news': 'News Feed Posts'
 };
 
-function SortableItem(props: { id: string }) {
+function SortableItem(props: { id: string, key?: string }) {
   const {
     attributes,
     listeners,
@@ -294,7 +295,7 @@ const HomeEditor: React.FC = () => {
                               strategy={verticalListSortingStrategy}
                             >
                               <div className="space-y-3">
-                                {formData.homeSectionOrder.map((section) => (
+                                {formData.homeSectionOrder.map((section: string) => (
                                   <SortableItem key={section} id={section} />
                                 ))}
                               </div>
@@ -607,6 +608,31 @@ const HomeEditor: React.FC = () => {
                                     onChange={(e) => setFormData({ ...formData, socialLinks: { ...formData.socialLinks, email: e.target.value } })}
                                     placeholder="admin@..."
                                   />
+                              </div>
+                          </div>
+
+                          <div className="space-y-4 pt-6 border-t border-gray-100">
+                              <h3 className="text-sm font-bold text-gray-900 uppercase tracking-widest border-b border-gray-100 pb-2">Facebook Feed Integration</h3>
+                              <p className="text-[10px] text-gray-500">Enter your Page ID and a Page Access Token to pull live posts into the app.</p>
+                              <div className="space-y-2">
+                                  <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Page ID</label>
+                                  <input 
+                                    className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-[#f4d300] text-sm"
+                                    value={formData.facebookPageId || ''}
+                                    onChange={(e) => setFormData({ ...formData, facebookPageId: e.target.value })}
+                                    placeholder="e.g. 630276440175048"
+                                  />
+                              </div>
+                              <div className="space-y-2">
+                                  <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Page Access Token</label>
+                                  <input 
+                                    type="password"
+                                    className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-[#f4d300] text-sm"
+                                    value={formData.facebookAccessToken || ''}
+                                    onChange={(e) => setFormData({ ...formData, facebookAccessToken: e.target.value })}
+                                    placeholder="EAAb..."
+                                  />
+                                  <p className="text-[9px] text-gray-400">Get this from the Meta for Developers portal.</p>
                               </div>
                           </div>
                       </div>

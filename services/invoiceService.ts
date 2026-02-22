@@ -1,5 +1,6 @@
 
 import { Order, AppConfig, UnitType } from "../types";
+import { jsPDF } from "jspdf";
 
 /**
  * Generates a professional PDF invoice, quote, or agreement.
@@ -10,8 +11,6 @@ import { Order, AppConfig, UnitType } from "../types";
  */
 export const generateInvoicePDF = async (order: Order, config: AppConfig, type: 'INVOICE' | 'QUOTE' | 'ESTIMATE' | 'ORDER_AGREEMENT' = 'INVOICE'): Promise<string> => {
   try {
-    const { jsPDF } = await import('https://esm.sh/jspdf@^2.5.1');
-    
     const doc = new jsPDF();
     const margin = 20;
     let y = margin;

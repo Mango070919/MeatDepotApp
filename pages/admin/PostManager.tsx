@@ -1,10 +1,11 @@
 
 import React, { useState } from 'react';
 import { useApp } from '../../store';
-import { Plus, Edit2, Trash2, X, Camera, ArrowUp, ArrowDown, Save, ArrowLeft, Eye, EyeOff, Loader2, Cloud, LayoutDashboard, Home, Newspaper } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, Camera, ArrowUp, ArrowDown, Save, ArrowLeft, Eye, EyeOff, Loader2, Cloud, LayoutDashboard, Home, Newspaper, Facebook, RefreshCw } from 'lucide-react';
 import { Post } from '../../types';
 import { useNavigate } from 'react-router-dom';
 import { uploadFile } from '../../services/storageService';
+import { fetchFacebookPosts } from '../../services/facebookService';
 
 const resizeImage = (file: File, maxWidth: number, maxHeight: number): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -45,7 +46,42 @@ const PostManager: React.FC = () => {
   const { posts, addPost, updatePost, deletePost, config, updateConfig, syncToSheet } = useApp();
   const [editingPost, setEditingPost] = useState<Partial<Post> | null>(null);
   const [isAddingNew, setIsAddingNew] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
   const navigate = useNavigate();
+
+  const handleSyncFacebook = async () => {
+      if (!config.facebookPageId || !config.facebookAccessToken) {
+          alert("Please configure Facebook Page ID and Access Token in Edit App > Social first.");
+          return;
+      }
+
+      try {
+          setIsSyncing(true);
+          const fbPosts = await fetchFacebookPosts(config.facebookPageId, config.facebookAccessToken);
+          
+          // Merge with existing posts, avoiding duplicates by ID
+          const existingIds = new Set(posts.map(p => p.id));
+          let addedCount = 0;
+          
+          for (const fbPost of fbPosts) {
+              if (!existingIds.has(fbPost.id)) {
+                  addPost(fbPost);
+                  addedCount++;
+              }
+          }
+
+          if (addedCount > 0) {
+              alert(`Successfully synced ${addedCount} new posts from Facebook!`);
+              await syncToSheet();
+          } else {
+              alert("No new posts found on Facebook.");
+          }
+      } catch (error: any) {
+          alert(`Sync failed: ${error.message}`);
+      } finally {
+          setIsSyncing(false);
+      }
+  };
 
   const orderedPosts = config.postOrder.map(id => posts.find(p => p.id === id)).filter(Boolean) as Post[];
 
@@ -127,9 +163,19 @@ const PostManager: React.FC = () => {
                       <p className="text-xs text-gray-500">Manage posts on the home screen</p>
                   </div>
               </div>
-              <button onClick={handleAddNew} className="bg-[#f4d300] text-black px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest flex items-center gap-2 shadow-md hover:scale-105 transition-all">
-                  <Plus size={16} /> New Post
-              </button>
+              <div className="flex gap-2">
+                  <button 
+                      onClick={handleSyncFacebook}
+                      disabled={isSyncing}
+                      className="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest flex items-center gap-2 shadow-md hover:bg-blue-700 transition-all disabled:opacity-50"
+                  >
+                      {isSyncing ? <RefreshCw className="animate-spin" size={16} /> : <Facebook size={16} />} 
+                      Sync Facebook
+                  </button>
+                  <button onClick={handleAddNew} className="bg-[#f4d300] text-black px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest flex items-center gap-2 shadow-md hover:scale-105 transition-all">
+                      <Plus size={16} /> New Post
+                  </button>
+              </div>
           </div>
           <div className="space-y-4">
             {orderedPosts.map((post, index) => (

@@ -3,8 +3,10 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useApp } from '../../store';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight, Star, ShoppingCart, Heart, Facebook, Instagram, Coins, Settings, EyeOff, Trash2, Edit2, AlertTriangle, X, Trophy, Medal, Eye, User as UserIcon, Save, Palette, Repeat, Camera, Loader2 } from 'lucide-react';
-import { UserRole } from '../../types';
+import { UserRole, Post } from '../../types';
 import { uploadFile } from '../../services/storageService';
+
+import { fetchFacebookPosts } from '../../services/facebookService';
 
 const resizeImage = (file: File, maxWidth: number, maxHeight: number): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -49,7 +51,7 @@ const getYoutubeEmbedUrl = (url: string) => {
 };
 
 const Home: React.FC = () => {
-  const { products, config, posts, currentUser, updateConfig, deletePost, users, orders, syncToSheet } = useApp();
+  const { products, config, posts, currentUser, updateConfig, deletePost, users, orders, syncToSheet, addPost } = useApp();
   const navigate = useNavigate();
   
   // Modal Local States
@@ -70,6 +72,32 @@ const Home: React.FC = () => {
   const [manualEntry3, setManualEntry3] = useState(config.manualLeaderboard?.[2] || '');
   
   const isAdmin = currentUser?.role === UserRole.ADMIN;
+
+  // Background Facebook Sync
+  useEffect(() => {
+    const syncFB = async () => {
+        if (config.facebookPageId && config.facebookAccessToken) {
+            try {
+                const fbPosts = await fetchFacebookPosts(config.facebookPageId, config.facebookAccessToken);
+                const existingIds = new Set(posts.map(p => p.id));
+                let hasNew = false;
+                for (const fbPost of fbPosts) {
+                    if (!existingIds.has(fbPost.id)) {
+                        addPost(fbPost);
+                        hasNew = true;
+                    }
+                }
+                if (hasNew) {
+                    // We don't necessarily need to syncToSheet here as it might be too frequent, 
+                    // but the addPost updates the local state which is what matters for the current view.
+                }
+            } catch (e) {
+                console.warn("Background FB Sync failed", e);
+            }
+        }
+    };
+    syncFB();
+  }, [config.facebookPageId, config.facebookAccessToken]);
 
   // Sync notice URL when config changes
   useEffect(() => {
@@ -99,9 +127,22 @@ const Home: React.FC = () => {
     .map(id => products.find(p => p.id === id))
     .filter(p => p?.featured && p?.available);
 
-  const orderedPosts = config.postOrder
-    .map(id => posts.find(p => p.id === id))
-    .filter(p => p && (p.visible !== false || isAdmin));
+  const orderedPosts = useMemo(() => {
+    // Start with posts in the defined order
+    const ordered = config.postOrder
+      .map(id => posts.find(p => p.id === id))
+      .filter((p): p is Post => !!p && (p.visible !== false || isAdmin));
+
+    // Find posts NOT in the defined order (e.g. newly synced FB posts)
+    const unordered = posts
+      .filter(p => !config.postOrder.includes(p.id) && (p.visible !== false || isAdmin))
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+    // Combine them, putting unordered (new) posts first if they are newer
+    // Actually, let's just combine them and sort the whole thing by timestamp for the home screen 
+    // to ensure "Latest News" is actually latest.
+    return [...ordered, ...unordered].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  }, [posts, config.postOrder, isAdmin]);
 
   const youtubeId = getYoutubeEmbedUrl(config.homepageBanners[0]);
 
@@ -478,26 +519,57 @@ const Home: React.FC = () => {
       </section>
   );
 
-  const renderNews = () => (
+  const renderNews = () => {
+    const displayPosts = orderedPosts.slice(0, 3);
+    
+    if (displayPosts.length === 0) return null;
+
+    return (
       <section className="space-y-10 px-2 mb-12">
         <div className="space-y-2">
           <h2 className="brand-font text-4xl font-bold italic text-white">Latest News</h2>
           <div className="h-1.5 w-20 bg-[#f4d300]"></div>
         </div>
-        <div className="w-full bg-white rounded-[20px] overflow-hidden flex justify-center">
-            <iframe 
-                src="https://www.facebook.com/plugins/page.php?href=https%3A%2F%2Fwww.facebook.com%2Fmeatdepotgq&tabs=timeline&width=500&height=800&small_header=false&adapt_container_width=true&hide_cover=false&show_facepile=true&appId" 
-                width="100%" 
-                height="800" 
-                style={{ border: 'none', overflow: 'hidden', maxWidth: '500px' }} 
-                scrolling="no" 
-                frameBorder="0" 
-                allowFullScreen={true} 
-                allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
-            ></iframe>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {displayPosts.map((post) => (
+                <div key={post.id} className="bg-[#121212] rounded-[32px] overflow-hidden border border-white/5 group hover:border-[#f4d300]/30 transition-all">
+                    <div className="aspect-square overflow-hidden relative">
+                        <img 
+                            src={post.imageUrl} 
+                            alt="News" 
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                        />
+                        <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full border border-white/10">
+                            <p className="text-[10px] font-bold text-white uppercase tracking-widest">
+                                {new Date(post.timestamp).toLocaleDateString()}
+                            </p>
+                        </div>
+                    </div>
+                    <div className="p-6 space-y-4">
+                        <p className="text-white/80 text-sm leading-relaxed line-clamp-3 italic">
+                            "{post.caption}"
+                        </p>
+                        <div className="flex items-center justify-between pt-4 border-t border-white/5">
+                            <div className="flex items-center gap-2 text-[#f4d300]">
+                                <Facebook size={14} />
+                                <span className="text-[10px] font-bold uppercase tracking-widest">Facebook</span>
+                            </div>
+                            <a 
+                                href={config.socialLinks?.facebook || "https://facebook.com/meatdepotgq"} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-white/40 hover:text-[#f4d300] transition-colors"
+                            >
+                                <ArrowRight size={18} />
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            ))}
         </div>
       </section>
-  );
+    );
+  };
 
   const sectionMap: Record<string, () => React.ReactElement> = {
     'hero': renderHero,

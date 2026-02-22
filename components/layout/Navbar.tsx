@@ -237,6 +237,15 @@ const Navbar: React.FC = () => {
           </button>
 
           <a 
+            href={config.socialLinks?.website || "https://meatdepot.co.za"} 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="w-9 h-9 bg-white/5 text-white/50 rounded-full flex items-center justify-center hover:text-white hover:bg-white/10 transition-all border border-white/10"
+          >
+            <Globe size={18} />
+          </a>
+
+          <a 
             href={config.socialLinks?.whatsapp || "https://wa.me/844012488038318"} 
             target="_blank" 
             rel="noopener noreferrer" 

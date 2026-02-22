@@ -92,14 +92,15 @@ export const INITIAL_CONFIG: AppConfig = {
   },
   googleSheetUrl: '',
   firebaseConfig: {
-      apiKey: '',
-      authDomain: '',
-      projectId: '',
-      storageBucket: '',
-      messagingSenderId: '',
-      appId: ''
+      apiKey: "AIzaSyCIx4buOYBBUUhqGwTzqCq9P-J6rPVsiWg",
+      authDomain: "meat-depot-app.firebaseapp.com",
+      projectId: "meat-depot-app",
+      storageBucket: "meat-depot-app.firebasestorage.app",
+      messagingSenderId: "451220534569",
+      appId: "1:451220534569:web:ec2074f9be9a8fb278f338",
+      measurementId: "G-CVVQ819T8L"
   },
-  backupMethod: 'CUSTOM_DOMAIN',
+  backupMethod: 'FIREBASE',
   customDomain: {
       url: 'https://meatdepot.co.za/wp-json/md-app/v1', // Absolute path to WP Plugin Endpoint
       apiKey: '' // User to set this in App Settings
@@ -111,5 +112,6 @@ export const INITIAL_CONFIG: AppConfig = {
     website: 'https://meatdepot.co.za',
     whatsapp: 'https://wa.me/844012488038318',
     email: 'admin@meatdepot.co.za'
-  }
+  },
+  facebookPageId: '630276440175048'
 };

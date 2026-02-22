@@ -232,6 +232,7 @@ export interface FirebaseConfig {
   storageBucket: string;
   messagingSenderId: string;
   appId: string;
+  measurementId?: string;
 }
 
 export interface AppConfig {
@@ -310,4 +311,6 @@ export interface AppConfig {
     whatsapp?: string;
     email?: string;
   };
+  facebookAccessToken?: string;
+  facebookPageId?: string;
 }

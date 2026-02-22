@@ -346,6 +346,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
               }
               await saveAppStateToDrive(dataToSave, config);
           }
+
+          // 4. PING LOCAL SERVER (For Vercel/Full-stack awareness)
+          try {
+              await fetch('/api/sync', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ data: dataToSave })
+              });
+          } catch (e) {
+              console.warn("Server sync ping failed (expected in client-only environments)");
+          }
           
           logActivity('SYNC', 'System state redeployed to cloud(s)');
 

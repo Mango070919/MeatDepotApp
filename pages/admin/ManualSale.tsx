@@ -99,7 +99,9 @@ const ManualSale: React.FC = () => {
           distanceKm: deliveryType === 'DELIVERY' ? distance : undefined,
           deliveryFee: deliveryFee,
           messages: [],
-          isManual: true
+          isManual: true,
+          contactEmail: customerType === 'EXISTING' && selectedUser ? selectedUser.email : newCustomer.email,
+          contactPhone: customerType === 'EXISTING' && selectedUser ? selectedUser.phone : newCustomer.phone
       };
   };
 
@@ -110,6 +112,15 @@ const ManualSale: React.FC = () => {
       }
       const order = getOrderObject();
       placeOrder(order, 0); // Adds to order list
+      
+      // Trigger Email
+      if (order.contactEmail) {
+          fetch('/api/send-order-email', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ order, config })
+          }).catch(console.error);
+      }
       
       // Auto-generate invoice/receipt since it's "Paid"
       if (window.confirm("Sale Completed & Paid. Download Receipt PDF now?")) {

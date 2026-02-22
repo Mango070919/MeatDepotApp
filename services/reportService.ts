@@ -1,5 +1,6 @@
 
 import { Order, UnitType, Product, OrderStatus } from "../types";
+import { jsPDF } from "jspdf";
 
 export const generateSalesReport = async (
   orders: Order[], 
@@ -8,7 +9,6 @@ export const generateSalesReport = async (
   endDate: string
 ): Promise<void> => {
   try {
-    const { jsPDF } = await import('https://esm.sh/jspdf@^2.5.1');
     const doc = new jsPDF();
     const margin = 15;
     let y = margin;

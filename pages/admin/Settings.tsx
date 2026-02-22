@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../store';
-import { Save, Briefcase, CreditCard, Database, FileCode, ClipboardCopy, Download, Upload, Copy, FileText, RotateCcw, X, Terminal, Loader2, Eye, Camera, Globe, Package, Truck, Flame, Server, HardDrive, Link } from 'lucide-react';
+import { Save, Briefcase, CreditCard, Database, FileCode, ClipboardCopy, Download, Upload, Copy, FileText, RotateCcw, X, Terminal, Loader2, Eye, Camera, Globe, Package, Truck, Flame, Server, HardDrive, Link, Mail } from 'lucide-react';
 import { AppConfig, BusinessDetails } from '../../types';
 import { useNavigate } from 'react-router-dom';
 
@@ -276,6 +276,9 @@ const Settings: React.FC = () => {
                       <option value="FIREBASE">Firebase (Fast & Real-time)</option>
                       <option value="CUSTOM_DOMAIN">Custom Domain / Server</option>
                   </select>
+                  <p className="text-[10px] text-gray-400 italic mt-1">
+                      Note: Vercel hosting is stateless. To ensure data persists across sessions and devices, you <b>must</b> configure one of the cloud sync methods above.
+                  </p>
               </div>
 
               {/* Dynamic Configuration Fields */}
@@ -352,6 +355,32 @@ const Settings: React.FC = () => {
                   placeholder="e.g. https://app.meatdepot.co.za" 
               />
               <p className="text-[10px] text-gray-400">This link will be used in generated QR codes and shareable messages.</p>
+          </div>
+      </section>
+
+      {/* Email Notifications */}
+      <section className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 space-y-6">
+          <div className="flex items-center gap-3 border-b border-gray-100 pb-6">
+              <div className="bg-blue-600 p-3 rounded-2xl text-white"><Mail size={24} /></div>
+              <div><h2 className="text-xl font-bold text-gray-900">Email Notifications</h2><p className="text-xs text-gray-500 font-medium">Configure automated order confirmation emails.</p></div>
+          </div>
+
+          <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100 text-xs text-blue-800 flex gap-2">
+              <Mail size={16} className="shrink-0"/>
+              <p>
+                  <strong>Automated Emails:</strong> The system is configured to send order summaries to customers. 
+                  To enable this, you must set <code>EMAIL_USER</code> and <code>EMAIL_PASS</code> in your environment variables (e.g., Vercel Dashboard).
+              </p>
+          </div>
+
+          <div className="space-y-4">
+              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                  <div>
+                      <p className="text-sm font-bold text-gray-900">Order Confirmation Emails</p>
+                      <p className="text-[10px] text-gray-500">Send an email to customers immediately after they place an order.</p>
+                  </div>
+                  <div className="text-green-600 font-bold text-[10px] uppercase tracking-widest bg-green-100 px-3 py-1 rounded-full">Active</div>
+              </div>
           </div>
       </section>
 
