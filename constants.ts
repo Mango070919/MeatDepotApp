@@ -92,7 +92,7 @@ export const INITIAL_CONFIG: AppConfig = {
   },
   googleSheetUrl: '',
   firebaseConfig: {
-      apiKey: "AIzaSyCIx4buOYBBUUhqGwTzqCq9P-J6rPVsiWg",
+      apiKey: "AI-SECRET",
       authDomain: "meat-depot-app.firebaseapp.com",
       projectId: "meat-depot-app",
       storageBucket: "meat-depot-app.firebasestorage.app",
