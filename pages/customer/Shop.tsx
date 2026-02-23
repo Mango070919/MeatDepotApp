@@ -307,7 +307,7 @@ const Shop: React.FC = () => {
       message += itemDetails;
       message += `\n\nPlease confirm availability.`;
 
-      const phone = '844012488038318';
+      const phone = '27632148131';
       const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
       window.open(url, '_blank');
   };

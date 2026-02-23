@@ -240,11 +240,20 @@ export interface FirebaseConfig {
   measurementId?: string;
 }
 
+export interface DeliveryZone {
+  id: string;
+  name: string;
+  fee: number;
+  minDistance?: number;
+  maxDistance?: number;
+}
+
 export interface AppConfig {
   paymentEnabled: boolean; // Toggles the "Request Payment Link" flow
   deliveryFee: number; // Base fee or Flat fee fallback
   deliveryRatePerKm?: number; // Variable rate per kilometer
-  deliveryCalculationMethod?: 'FIXED' | 'DISTANCE'; // New field
+  deliveryCalculationMethod?: 'FIXED' | 'DISTANCE' | 'ZONES'; // Updated
+  deliveryZones?: DeliveryZone[]; // New field
   minimumOrder: number;
   collectionInstructions: string;
   homepageBanners: string[]; // Can be Image URL or YouTube URL

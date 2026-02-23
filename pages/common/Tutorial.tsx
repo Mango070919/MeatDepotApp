@@ -171,7 +171,7 @@ const Tutorial: React.FC = () => {
           <p className="text-white/50 text-xs">Contact the system administrator or check the settings tab for support info.</p>
           {role === UserRole.CUSTOMER && (
               <button 
-                onClick={() => window.open('https://wa.me/844012488038318', '_blank')}
+                onClick={() => window.open('https://wa.me/27632148131', '_blank')}
                 className="text-white text-xs font-bold underline decoration-[#f4d300] decoration-2 underline-offset-4"
               >
                   Chat on WhatsApp

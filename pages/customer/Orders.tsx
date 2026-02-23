@@ -242,7 +242,7 @@ const Orders: React.FC = () => {
                   </div>
 
                   <button 
-                    onClick={() => window.open(`https://wa.me/844012488038318?text=Query about order ${order.id}`, '_blank')}
+                    onClick={() => window.open(`https://wa.me/27632148131?text=Query about order ${order.id}`, '_blank')}
                     className="w-full flex items-center justify-center gap-3 bg-white/10 text-white py-5 rounded-3xl font-bold text-xs tracking-widest hover:bg-white/20 transition-all uppercase"
                   >
                     Chat on WhatsApp

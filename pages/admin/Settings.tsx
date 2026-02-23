@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../store';
-import { Save, Briefcase, CreditCard, Database, FileCode, ClipboardCopy, Download, Upload, Copy, FileText, RotateCcw, X, Terminal, Loader2, Eye, Camera, Globe, Package, Truck, Flame, Server, HardDrive, Link, Mail, Key, Sparkles } from 'lucide-react';
+import { Save, Briefcase, Camera, Globe, Package, Truck, Link, Loader2, Eye, Database, Flame, Server, Key, Mail, Sparkles, HardDrive, X, Plus } from 'lucide-react';
 import { AppConfig, BusinessDetails } from '../../types';
 import { useNavigate } from 'react-router-dom';
 
@@ -42,28 +42,11 @@ const resizeImage = (file: File, maxWidth: number, maxHeight: number): Promise<s
 
 
 const Settings: React.FC = () => {
-  const { config, updateConfig, togglePreviewMode, products, users, orders, posts, restoreData, previewData, setPreviewData, syncToSheet, promoCodes, rawMaterials, productionBatches, activityLogs } = useApp();
+  const { config, updateConfig, togglePreviewMode, previewData, setPreviewData, syncToSheet } = useApp();
   const [formData, setFormData] = useState<AppConfig>(previewData?.config || config);
   const navigate = useNavigate();
   const [isSaving, setIsSaving] = useState(false);
   
-  // Manual Restore State
-  const [showManualRestore, setShowManualRestore] = useState(false);
-  const [manualRestoreData, setManualRestoreData] = useState('');
-  const [parsedRestoreData, setParsedRestoreData] = useState<any>(null);
-  
-  const [restoreSelection, setRestoreSelection] = useState({
-      config: true,
-      products: true,
-      users: true,
-      orders: true,
-      posts: true,
-      promoCodes: true,
-      rawMaterials: true,
-      productionBatches: true,
-      activityLogs: true
-  });
-
   useEffect(() => {
       if (!previewData?.config) setFormData(config);
   }, [config, previewData]);
@@ -72,7 +55,6 @@ const Settings: React.FC = () => {
     setIsSaving(true);
     try {
         updateConfig(formData);
-        // Force immediate sync to cloud (if configured elsewhere) or just local update
         await syncToSheet({ config: formData });
         setPreviewData({ config: undefined });
         alert('Settings saved!');
@@ -118,134 +100,8 @@ const Settings: React.FC = () => {
     }
   };
 
-  const handleBackup = () => {
-    const data: any = { timestamp: new Date().toISOString() };
-    
-    if (restoreSelection.config) data.config = formData;
-    if (restoreSelection.products) data.products = products;
-    if (restoreSelection.users) data.users = users;
-    if (restoreSelection.orders) data.orders = orders;
-    if (restoreSelection.posts) data.posts = posts;
-    if (restoreSelection.promoCodes) data.promoCodes = promoCodes;
-    if (restoreSelection.rawMaterials) data.rawMaterials = rawMaterials;
-    if (restoreSelection.productionBatches) data.productionBatches = productionBatches;
-    if (restoreSelection.activityLogs) data.activityLogs = activityLogs;
-
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `meat_depot_backup_${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
-
-  const handleCopyToClipboard = () => {
-      const data: any = { timestamp: new Date().toISOString() };
-      if (restoreSelection.config) data.config = formData;
-      if (restoreSelection.products) data.products = products;
-      if (restoreSelection.users) data.users = users;
-      if (restoreSelection.orders) data.orders = orders;
-      if (restoreSelection.posts) data.posts = posts;
-      if (restoreSelection.promoCodes) data.promoCodes = promoCodes;
-      if (restoreSelection.rawMaterials) data.rawMaterials = rawMaterials;
-      if (restoreSelection.productionBatches) data.productionBatches = productionBatches;
-      if (restoreSelection.activityLogs) data.activityLogs = activityLogs;
-
-      const jsonString = JSON.stringify(data, null, 0); // Minified for clipboard
-      navigator.clipboard.writeText(jsonString).then(() => {
-          alert("Success! Selected data copied to clipboard.");
-      }).catch(err => {
-          alert("Failed to copy to clipboard: " + err);
-      });
-  };
-
-  const parseRestoreInput = (input: string) => {
-      try {
-          const data = JSON.parse(input);
-          setParsedRestoreData(data);
-          // Auto-select available fields
-          setRestoreSelection({
-              config: !!data.config,
-              products: !!data.products,
-              users: !!data.users,
-              orders: !!data.orders,
-              posts: !!data.posts,
-              promoCodes: !!data.promoCodes,
-              rawMaterials: !!data.rawMaterials,
-              productionBatches: !!data.productionBatches,
-              activityLogs: !!data.activityLogs
-          });
-      } catch (e) {
-          setParsedRestoreData(null);
-      }
-  };
-
-  const handleManualRestoreSubmit = () => {
-      if (!parsedRestoreData) return;
-      
-      if (window.confirm(`Restore selected data from ${parsedRestoreData.timestamp || 'unknown date'}?\n\nThis will OVERWRITE current data for the selected sections.`)) {
-          processRestore(parsedRestoreData);
-          setManualRestoreData('');
-          setParsedRestoreData(null);
-          setShowManualRestore(false);
-          alert("System state restored successfully.");
-      }
-  };
-
-  const processRestore = (data: any) => {
-      const payload: any = {};
-      if (restoreSelection.config && data.config) payload.config = data.config;
-      if (restoreSelection.products && data.products) payload.products = data.products;
-      if (restoreSelection.users && data.users) payload.users = data.users;
-      if (restoreSelection.orders && data.orders) payload.orders = data.orders;
-      if (restoreSelection.posts && data.posts) payload.posts = data.posts;
-      if (restoreSelection.promoCodes && data.promoCodes) payload.promoCodes = data.promoCodes;
-      if (restoreSelection.rawMaterials && data.rawMaterials) payload.rawMaterials = data.rawMaterials;
-      if (restoreSelection.productionBatches && data.productionBatches) payload.productionBatches = data.productionBatches;
-      if (restoreSelection.activityLogs && data.activityLogs) payload.activityLogs = data.activityLogs;
-      
-      restoreData(payload);
-      if (payload.config) setFormData(payload.config);
-  };
-
-  const handleRestore = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-            try {
-                const data = JSON.parse(ev.target?.result as string);
-                setParsedRestoreData(data);
-                setManualRestoreData(JSON.stringify(data, null, 2));
-                setShowManualRestore(true);
-                // Auto-select available
-                setRestoreSelection({
-                    config: !!data.config,
-                    products: !!data.products,
-                    users: !!data.users,
-                    orders: !!data.orders,
-                    posts: !!data.posts,
-                    promoCodes: !!data.promoCodes,
-                    rawMaterials: !!data.rawMaterials,
-                    productionBatches: !!data.productionBatches,
-                    activityLogs: !!data.activityLogs
-                });
-            } catch (err) {
-                alert('Invalid backup file.');
-            }
-        };
-        reader.readAsText(e.target.files[0]);
-    }
-  };
-  
-  const toggleSelection = (key: keyof typeof restoreSelection) => {
-      setRestoreSelection(prev => ({ ...prev, [key]: !prev[key] }));
-  };
-  
   return (
-    <div className="space-y-8 pb-20 pt-8">
+    <div className="space-y-8 pb-20 pt-8 max-w-6xl mx-auto">
       <div className="flex justify-between items-center px-2">
         <h1 className="text-4xl font-bold text-gray-900">App Settings</h1>
         <div className="flex gap-4">
@@ -257,89 +113,6 @@ const Settings: React.FC = () => {
         </div>
       </div>
       
-      {/* Cloud & Backup Strategy */}
-      <section className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 space-y-6">
-          <div className="flex items-center gap-3 border-b border-gray-100 pb-6">
-              <div className="bg-purple-600 p-3 rounded-2xl text-white"><Server size={24} /></div>
-              <div><h2 className="text-xl font-bold text-gray-900">Cloud & Backup Strategy</h2><p className="text-xs text-gray-500 font-medium">Choose where your data and images are stored.</p></div>
-          </div>
-
-          <div className="space-y-6">
-              <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Select Backup Destination</label>
-                  <select 
-                      className="w-full p-3 bg-gray-50 text-gray-900 rounded-xl border border-gray-200 outline-none focus:ring-1 focus:ring-[#f4d300] font-bold"
-                      value={formData.backupMethod || 'GOOGLE_DRIVE'}
-                      onChange={(e) => setFormData({ ...formData, backupMethod: e.target.value as any })}
-                  >
-                      <option value="GOOGLE_DRIVE">Google Drive (Recommended)</option>
-                      <option value="FIREBASE">Firebase (Fast & Real-time)</option>
-                      <option value="CUSTOM_DOMAIN">Custom Domain / Server</option>
-                  </select>
-                  <p className="text-[10px] text-gray-400 italic mt-1">
-                      Note: Vercel hosting is stateless. To ensure data persists across sessions and devices, you <b>must</b> configure one of the cloud sync methods above.
-                  </p>
-              </div>
-
-              {/* Dynamic Configuration Fields */}
-              {formData.backupMethod === 'GOOGLE_DRIVE' && (
-                  <div className="p-6 bg-blue-50 rounded-2xl border border-blue-100 space-y-4 animate-in fade-in">
-                      <div className="flex items-center gap-2 text-blue-800 font-bold text-sm"><HardDrive size={16}/> Google Drive Settings</div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                              <label className="text-[10px] font-bold text-blue-400 uppercase tracking-widest">Access Token</label>
-                              <input type="password" className="w-full p-3 bg-white text-gray-900 rounded-xl border border-blue-200 outline-none focus:ring-1 focus:ring-blue-500 text-sm" value={formData.googleDrive?.accessToken || ''} onChange={(e) => setFormData({ ...formData, googleDrive: { ...formData.googleDrive!, accessToken: e.target.value } })} placeholder="OAuth Token" />
-                          </div>
-                          <div className="space-y-2">
-                              <label className="text-[10px] font-bold text-blue-400 uppercase tracking-widest">Folder ID</label>
-                              <input className="w-full p-3 bg-white text-gray-900 rounded-xl border border-blue-200 outline-none focus:ring-1 focus:ring-blue-500 text-sm" value={formData.googleDrive?.folderId || ''} onChange={(e) => setFormData({ ...formData, googleDrive: { ...formData.googleDrive!, folderId: e.target.value } })} placeholder="Folder ID" />
-                          </div>
-                      </div>
-                  </div>
-              )}
-
-              {formData.backupMethod === 'FIREBASE' && (
-                  <div className="p-6 bg-orange-50 rounded-2xl border border-orange-100 space-y-4 animate-in fade-in">
-                      <div className="flex items-center gap-2 text-orange-800 font-bold text-sm"><Flame size={16}/> Firebase Configuration</div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                              <label className="text-[10px] font-bold text-orange-400 uppercase tracking-widest">API Key</label>
-                              <input className="w-full p-3 bg-white text-gray-900 rounded-xl border border-orange-200 outline-none focus:ring-1 focus:ring-orange-500 text-sm" value={formData.firebaseConfig?.apiKey || ''} onChange={(e) => setFormData({ ...formData, firebaseConfig: { ...formData.firebaseConfig!, apiKey: e.target.value } })} placeholder="AIzaSy..." />
-                          </div>
-                          <div className="space-y-2">
-                              <label className="text-[10px] font-bold text-orange-400 uppercase tracking-widest">Project ID</label>
-                              <input className="w-full p-3 bg-white text-gray-900 rounded-xl border border-orange-200 outline-none focus:ring-1 focus:ring-orange-500 text-sm" value={formData.firebaseConfig?.projectId || ''} onChange={(e) => setFormData({ ...formData, firebaseConfig: { ...formData.firebaseConfig!, projectId: e.target.value } })} placeholder="project-id" />
-                          </div>
-                          <div className="space-y-2">
-                              <label className="text-[10px] font-bold text-orange-400 uppercase tracking-widest">Storage Bucket</label>
-                              <input className="w-full p-3 bg-white text-gray-900 rounded-xl border border-orange-200 outline-none focus:ring-1 focus:ring-orange-500 text-sm" value={formData.firebaseConfig?.storageBucket || ''} onChange={(e) => setFormData({ ...formData, firebaseConfig: { ...formData.firebaseConfig!, storageBucket: e.target.value } })} placeholder="bucket.appspot.com" />
-                          </div>
-                          <div className="space-y-2">
-                              <label className="text-[10px] font-bold text-orange-400 uppercase tracking-widest">App ID</label>
-                              <input className="w-full p-3 bg-white text-gray-900 rounded-xl border border-orange-200 outline-none focus:ring-1 focus:ring-orange-500 text-sm" value={formData.firebaseConfig?.appId || ''} onChange={(e) => setFormData({ ...formData, firebaseConfig: { ...formData.firebaseConfig!, appId: e.target.value } })} placeholder="1:..." />
-                          </div>
-                      </div>
-                  </div>
-              )}
-
-              {formData.backupMethod === 'CUSTOM_DOMAIN' && (
-                  <div className="p-6 bg-purple-50 rounded-2xl border border-purple-100 space-y-4 animate-in fade-in">
-                      <div className="flex items-center gap-2 text-purple-800 font-bold text-sm"><Globe size={16}/> Custom Server Settings</div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                              <label className="text-[10px] font-bold text-purple-400 uppercase tracking-widest">API Endpoint URL</label>
-                              <input className="w-full p-3 bg-white text-gray-900 rounded-xl border border-purple-200 outline-none focus:ring-1 focus:ring-purple-500 text-sm" value={formData.customDomain?.url || ''} onChange={(e) => setFormData({ ...formData, customDomain: { ...formData.customDomain!, url: e.target.value } })} placeholder="https://api.mysite.com/v1" />
-                          </div>
-                          <div className="space-y-2">
-                              <label className="text-[10px] font-bold text-purple-400 uppercase tracking-widest">API Key / Token</label>
-                              <input type="password" className="w-full p-3 bg-white text-gray-900 rounded-xl border border-purple-200 outline-none focus:ring-1 focus:ring-purple-500 text-sm" value={formData.customDomain?.apiKey || ''} onChange={(e) => setFormData({ ...formData, customDomain: { ...formData.customDomain!, apiKey: e.target.value } })} placeholder="Secret Key" />
-                          </div>
-                      </div>
-                  </div>
-              )}
-          </div>
-      </section>
-
       {/* App Hosting / Public Link */}
       <section className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 space-y-6">
           <div className="flex items-center gap-3 border-b border-gray-100 pb-6">
@@ -361,7 +134,7 @@ const Settings: React.FC = () => {
       {/* Security & Admin Access */}
       <section className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 space-y-6">
           <div className="flex items-center gap-3 border-b border-gray-100 pb-6">
-              <div className="bg-red-600 p-3 rounded-2xl text-white"><X size={24} /></div>
+              <div className="bg-red-600 p-3 rounded-2xl text-white"><Globe size={24} /></div>
               <div><h2 className="text-xl font-bold text-gray-900">Security & Admin Access</h2><p className="text-xs text-gray-500 font-medium">Protect your admin dashboard with custom credentials.</p></div>
           </div>
 
@@ -387,146 +160,6 @@ const Settings: React.FC = () => {
               </div>
           </div>
           <p className="text-[10px] text-gray-400">If left blank, the default credentials from the source code will be used. <strong>Highly recommended to change these for production.</strong></p>
-      </section>
-
-      {/* API & Service Credentials */}
-      <section className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 space-y-6">
-          <div className="flex items-center gap-3 border-b border-gray-100 pb-6">
-              <div className="bg-blue-600 p-3 rounded-2xl text-white"><Key size={24} /></div>
-              <div><h2 className="text-xl font-bold text-gray-900">API & Service Credentials</h2><p className="text-xs text-gray-500 font-medium">Configure external services like Email and AI.</p></div>
-          </div>
-
-          <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100 text-xs text-blue-800 flex gap-2">
-              <Mail size={16} className="shrink-0"/>
-              <p>
-                  <strong>Manual Configuration:</strong> You can now manage your API keys directly here. 
-                  These settings are stored in your main database (Google Sheets/Firebase).
-              </p>
-          </div>
-
-          <div className="space-y-6">
-              {/* Gemini AI */}
-              <div className="space-y-4 p-6 bg-gray-50 rounded-2xl border border-gray-100">
-                  <div className="flex items-center gap-2 text-gray-900 font-bold text-sm"><Sparkles size={16} className="text-purple-600"/> Gemini AI Configuration</div>
-                  <div className="space-y-2">
-                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Gemini API Key</label>
-                      <input 
-                          type="password"
-                          className="w-full p-3 bg-white text-gray-900 rounded-xl border border-gray-200 outline-none focus:ring-1 focus:ring-blue-500 text-sm font-mono" 
-                          value={formData.geminiApiKey || ''} 
-                          onChange={(e) => setFormData({ ...formData, geminiApiKey: e.target.value })} 
-                          placeholder="AIzaSy..." 
-                      />
-                      <p className="text-[10px] text-gray-400">Used for address validation and AI assistance.</p>
-                  </div>
-              </div>
-
-              {/* Google Drive & Sheets */}
-              <div className="space-y-4 p-6 bg-gray-50 rounded-2xl border border-gray-100">
-                  <div className="flex items-center gap-2 text-gray-900 font-bold text-sm"><Database size={16} className="text-green-600"/> Google Drive & Sheets Configuration</div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Drive Access Token</label>
-                          <input 
-                              type="password"
-                              className="w-full p-3 bg-white text-gray-900 rounded-xl border border-gray-200 outline-none focus:ring-1 focus:ring-blue-500 text-sm font-mono" 
-                              value={formData.googleDrive?.accessToken || ''} 
-                              onChange={(e) => setFormData({ ...formData, googleDrive: { ...formData.googleDrive!, accessToken: e.target.value } })} 
-                              placeholder="ya29..." 
-                          />
-                      </div>
-                      <div className="space-y-2">
-                          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Drive Folder ID</label>
-                          <input 
-                              className="w-full p-3 bg-white text-gray-900 rounded-xl border border-gray-200 outline-none focus:ring-1 focus:ring-blue-500 text-sm font-mono" 
-                              value={formData.googleDrive?.folderId || ''} 
-                              onChange={(e) => setFormData({ ...formData, googleDrive: { ...formData.googleDrive!, folderId: e.target.value } })} 
-                              placeholder="1fWq..." 
-                          />
-                      </div>
-                      <div className="space-y-2 md:col-span-2">
-                          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Google Sheet URL / ID</label>
-                          <input 
-                              className="w-full p-3 bg-white text-gray-900 rounded-xl border border-gray-200 outline-none focus:ring-1 focus:ring-blue-500 text-sm" 
-                              value={formData.googleSheetUrl || ''} 
-                              onChange={(e) => setFormData({ ...formData, googleSheetUrl: e.target.value })} 
-                              placeholder="https://docs.google.com/spreadsheets/d/..." 
-                          />
-                      </div>
-                  </div>
-                  <p className="text-[10px] text-gray-400">Required for automated backups and synchronization with Google Sheets.</p>
-              </div>
-
-              {/* Email (SMTP) */}
-              <div className="space-y-4 p-6 bg-gray-50 rounded-2xl border border-gray-100">
-                  <div className="flex items-center gap-2 text-gray-900 font-bold text-sm"><Mail size={16} className="text-blue-600"/> Email (SMTP) Configuration</div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">SMTP User (Gmail)</label>
-                          <input 
-                              className="w-full p-3 bg-white text-gray-900 rounded-xl border border-gray-200 outline-none focus:ring-1 focus:ring-blue-500 text-sm" 
-                              value={formData.emailConfig?.user || ''} 
-                              onChange={(e) => setFormData({ ...formData, emailConfig: { user: e.target.value, pass: formData.emailConfig?.pass || '' } })} 
-                              placeholder="your-email@gmail.com" 
-                          />
-                      </div>
-                      <div className="space-y-2">
-                          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">App Password</label>
-                          <input 
-                              type="password"
-                              className="w-full p-3 bg-white text-gray-900 rounded-xl border border-gray-200 outline-none focus:ring-1 focus:ring-blue-500 text-sm" 
-                              value={formData.emailConfig?.pass || ''} 
-                              onChange={(e) => setFormData({ ...formData, emailConfig: { user: formData.emailConfig?.user || '', pass: e.target.value } })} 
-                              placeholder="xxxx xxxx xxxx xxxx" 
-                          />
-                      </div>
-                  </div>
-                  <p className="text-[10px] text-gray-400">For Gmail, use an "App Password" generated in your Google Account security settings.</p>
-              </div>
-          </div>
-      </section>
-
-      {/* Firebase Configuration */}
-      <section className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 space-y-6">
-          <div className="flex items-center gap-3 border-b border-gray-100 pb-6">
-              <div className="bg-orange-600 p-3 rounded-2xl text-white"><Flame size={24} /></div>
-              <div><h2 className="text-xl font-bold text-gray-900">Firebase Configuration</h2><p className="text-xs text-gray-500 font-medium">Real-time database and cloud storage.</p></div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">API Key</label>
-                  <input 
-                      className="w-full p-3 bg-gray-50 text-gray-900 rounded-xl border border-gray-200 outline-none focus:ring-1 focus:ring-orange-500 text-sm font-mono" 
-                      value={formData.firebaseConfig?.apiKey || ''} 
-                      onChange={(e) => setFormData({ ...formData, firebaseConfig: { ...formData.firebaseConfig!, apiKey: e.target.value } })} 
-                  />
-              </div>
-              <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Project ID</label>
-                  <input 
-                      className="w-full p-3 bg-gray-50 text-gray-900 rounded-xl border border-gray-200 outline-none focus:ring-1 focus:ring-orange-500 text-sm" 
-                      value={formData.firebaseConfig?.projectId || ''} 
-                      onChange={(e) => setFormData({ ...formData, firebaseConfig: { ...formData.firebaseConfig!, projectId: e.target.value } })} 
-                  />
-              </div>
-              <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Storage Bucket</label>
-                  <input 
-                      className="w-full p-3 bg-gray-50 text-gray-900 rounded-xl border border-gray-200 outline-none focus:ring-1 focus:ring-orange-500 text-sm" 
-                      value={formData.firebaseConfig?.storageBucket || ''} 
-                      onChange={(e) => setFormData({ ...formData, firebaseConfig: { ...formData.firebaseConfig!, storageBucket: e.target.value } })} 
-                  />
-              </div>
-              <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">App ID</label>
-                  <input 
-                      className="w-full p-3 bg-gray-50 text-gray-900 rounded-xl border border-gray-200 outline-none focus:ring-1 focus:ring-orange-500 text-sm font-mono" 
-                      value={formData.firebaseConfig?.appId || ''} 
-                      onChange={(e) => setFormData({ ...formData, firebaseConfig: { ...formData.firebaseConfig!, appId: e.target.value } })} 
-                  />
-              </div>
-          </div>
       </section>
 
       {/* Home Screen Content */}
@@ -573,8 +206,97 @@ const Settings: React.FC = () => {
                       >
                           Distance Based
                       </button>
+                      <button 
+                          onClick={() => setFormData({ ...formData, deliveryCalculationMethod: 'ZONES' })}
+                          className={`flex-1 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${formData.deliveryCalculationMethod === 'ZONES' ? 'bg-white text-black shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                      >
+                          Zones
+                      </button>
                   </div>
               </div>
+
+              {formData.deliveryCalculationMethod === 'ZONES' && (
+                  <div className="space-y-4 p-6 bg-gray-50 rounded-2xl border border-gray-200 animate-in fade-in">
+                      <div className="flex justify-between items-center">
+                          <h3 className="text-sm font-bold text-gray-900">Delivery Zones</h3>
+                          <button 
+                              onClick={() => {
+                                  const newZone = { id: Math.random().toString(36).substr(2, 9), name: 'New Zone', fee: 50, minDistance: 0, maxDistance: 10 };
+                                  setFormData({ ...formData, deliveryZones: [...(formData.deliveryZones || []), newZone] });
+                              }}
+                              className="flex items-center gap-1 text-[10px] font-bold text-blue-600 uppercase tracking-widest hover:underline"
+                          >
+                              <Plus size={12} /> Add Zone
+                          </button>
+                      </div>
+                      <div className="space-y-3">
+                          {(formData.deliveryZones || []).map((zone, index) => (
+                              <div key={zone.id} className="grid grid-cols-1 md:grid-cols-4 gap-3 p-4 bg-white rounded-xl border border-gray-100 shadow-sm relative group">
+                                  <div className="space-y-1">
+                                      <label className="text-[9px] font-bold text-gray-400 uppercase">Zone Name</label>
+                                      <input 
+                                          className="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-bold" 
+                                          value={zone.name} 
+                                          onChange={(e) => {
+                                              const newZones = [...(formData.deliveryZones || [])];
+                                              newZones[index].name = e.target.value;
+                                              setFormData({ ...formData, deliveryZones: newZones });
+                                          }}
+                                      />
+                                  </div>
+                                  <div className="space-y-1">
+                                      <label className="text-[9px] font-bold text-gray-400 uppercase">Min Distance (km)</label>
+                                      <input 
+                                          type="number"
+                                          className="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg text-xs" 
+                                          value={zone.minDistance || 0} 
+                                          onChange={(e) => {
+                                              const newZones = [...(formData.deliveryZones || [])];
+                                              newZones[index].minDistance = Number(e.target.value);
+                                              setFormData({ ...formData, deliveryZones: newZones });
+                                          }}
+                                      />
+                                  </div>
+                                  <div className="space-y-1">
+                                      <label className="text-[9px] font-bold text-gray-400 uppercase">Max Distance (km)</label>
+                                      <input 
+                                          type="number"
+                                          className="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg text-xs" 
+                                          value={zone.maxDistance || 0} 
+                                          onChange={(e) => {
+                                              const newZones = [...(formData.deliveryZones || [])];
+                                              newZones[index].maxDistance = Number(e.target.value);
+                                              setFormData({ ...formData, deliveryZones: newZones });
+                                          }}
+                                      />
+                                  </div>
+                                  <div className="space-y-1">
+                                      <label className="text-[9px] font-bold text-gray-400 uppercase">Fee (R)</label>
+                                      <input 
+                                          type="number"
+                                          className="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-bold text-blue-600" 
+                                          value={zone.fee} 
+                                          onChange={(e) => {
+                                              const newZones = [...(formData.deliveryZones || [])];
+                                              newZones[index].fee = Number(e.target.value);
+                                              setFormData({ ...formData, deliveryZones: newZones });
+                                          }}
+                                      />
+                                  </div>
+                                  <button 
+                                      onClick={() => {
+                                          const newZones = (formData.deliveryZones || []).filter((_, i) => i !== index);
+                                          setFormData({ ...formData, deliveryZones: newZones });
+                                      }}
+                                      className="absolute -top-2 -right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                                  >
+                                      <X size={12} />
+                                  </button>
+                              </div>
+                          ))}
+                      </div>
+                  </div>
+              )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {formData.deliveryCalculationMethod === 'DISTANCE' && (
@@ -618,6 +340,98 @@ const Settings: React.FC = () => {
                   >
                       <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${formData.enableVacuumPack ? 'translate-x-6' : 'translate-x-1'}`} />
                   </button>
+              </div>
+          </div>
+      </section>
+
+      {/* Cloud Sync & API Credentials */}
+      <section className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 space-y-6">
+          <div className="flex items-center gap-3 border-b border-gray-100 pb-6">
+                <div className="bg-blue-600 p-3 rounded-2xl text-white"><Database size={24} /></div>
+                <div><h2 className="text-xl font-bold text-gray-900">Cloud Sync & API Credentials</h2><p className="text-xs text-gray-500 font-medium">Manage your cloud backups and external service keys.</p></div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* Backup Strategy */}
+              <div className="space-y-4">
+                  <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2"><HardDrive size={16} className="text-blue-500" /> Backup Destination</h3>
+                  <select 
+                      className="w-full p-3 bg-gray-50 text-gray-900 rounded-xl border border-gray-200 outline-none focus:ring-1 focus:ring-blue-500 font-bold text-sm"
+                      value={formData.backupMethod || 'GOOGLE_DRIVE'}
+                      onChange={(e) => setFormData({ ...formData, backupMethod: e.target.value as any })}
+                  >
+                      <option value="GOOGLE_DRIVE">Google Drive (Recommended)</option>
+                      <option value="FIREBASE">Firebase (Fast & Real-time)</option>
+                      <option value="CUSTOM_DOMAIN">Custom Domain / Server</option>
+                  </select>
+              </div>
+
+              {/* Gemini AI */}
+              <div className="space-y-4">
+                  <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2"><Sparkles size={16} className="text-purple-500" /> Gemini AI</h3>
+                  <div className="space-y-2">
+                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Gemini API Key</label>
+                      <input 
+                          type="password"
+                          className="w-full p-3 bg-gray-50 text-gray-900 rounded-xl border border-gray-200 outline-none focus:ring-1 focus:ring-purple-500 text-sm font-mono" 
+                          value={formData.geminiApiKey || ''} 
+                          onChange={(e) => setFormData({ ...formData, geminiApiKey: e.target.value })} 
+                          placeholder="AIzaSy..." 
+                      />
+                  </div>
+              </div>
+
+              {/* Firebase */}
+              <div className="space-y-4 md:col-span-2 p-6 bg-orange-50/30 rounded-2xl border border-orange-100">
+                  <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2"><Flame size={16} className="text-orange-600" /> Firebase Configuration</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                      <div className="space-y-1">
+                          <label className="text-[9px] font-bold text-gray-400 uppercase">API Key</label>
+                          <input className="w-full p-2 bg-white border border-gray-200 rounded-lg text-xs font-mono" value={formData.firebaseConfig?.apiKey || ''} onChange={(e) => setFormData({ ...formData, firebaseConfig: { ...formData.firebaseConfig!, apiKey: e.target.value } })} />
+                      </div>
+                      <div className="space-y-1">
+                          <label className="text-[9px] font-bold text-gray-400 uppercase">Project ID</label>
+                          <input className="w-full p-2 bg-white border border-gray-200 rounded-lg text-xs" value={formData.firebaseConfig?.projectId || ''} onChange={(e) => setFormData({ ...formData, firebaseConfig: { ...formData.firebaseConfig!, projectId: e.target.value } })} />
+                      </div>
+                      <div className="space-y-1">
+                          <label className="text-[9px] font-bold text-gray-400 uppercase">Storage Bucket</label>
+                          <input className="w-full p-2 bg-white border border-gray-200 rounded-lg text-xs" value={formData.firebaseConfig?.storageBucket || ''} onChange={(e) => setFormData({ ...formData, firebaseConfig: { ...formData.firebaseConfig!, storageBucket: e.target.value } })} />
+                      </div>
+                      <div className="space-y-1">
+                          <label className="text-[9px] font-bold text-gray-400 uppercase">App ID</label>
+                          <input className="w-full p-2 bg-white border border-gray-200 rounded-lg text-xs font-mono" value={formData.firebaseConfig?.appId || ''} onChange={(e) => setFormData({ ...formData, firebaseConfig: { ...formData.firebaseConfig!, appId: e.target.value } })} />
+                      </div>
+                  </div>
+              </div>
+
+              {/* Custom Server */}
+              <div className="space-y-4 p-6 bg-purple-50/30 rounded-2xl border border-purple-100">
+                  <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2"><Server size={16} className="text-purple-600" /> Custom Server</h3>
+                  <div className="space-y-3">
+                      <div className="space-y-1">
+                          <label className="text-[9px] font-bold text-gray-400 uppercase">Endpoint URL</label>
+                          <input className="w-full p-2 bg-white border border-gray-200 rounded-lg text-xs" value={formData.customDomain?.url || ''} onChange={(e) => setFormData({ ...formData, customDomain: { ...formData.customDomain!, url: e.target.value } })} placeholder="https://..." />
+                      </div>
+                      <div className="space-y-1">
+                          <label className="text-[9px] font-bold text-gray-400 uppercase">Server API Key</label>
+                          <input type="password" className="w-full p-2 bg-white border border-gray-200 rounded-lg text-xs" value={formData.customDomain?.apiKey || ''} onChange={(e) => setFormData({ ...formData, customDomain: { ...formData.customDomain!, apiKey: e.target.value } })} />
+                      </div>
+                  </div>
+              </div>
+
+              {/* Email Config */}
+              <div className="space-y-4 p-6 bg-blue-50/30 rounded-2xl border border-blue-100">
+                  <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2"><Mail size={16} className="text-blue-600" /> Email (SMTP)</h3>
+                  <div className="space-y-3">
+                      <div className="space-y-1">
+                          <label className="text-[9px] font-bold text-gray-400 uppercase">SMTP User</label>
+                          <input className="w-full p-2 bg-white border border-gray-200 rounded-lg text-xs" value={formData.emailConfig?.user || ''} onChange={(e) => setFormData({ ...formData, emailConfig: { ...formData.emailConfig!, user: e.target.value } })} />
+                      </div>
+                      <div className="space-y-1">
+                          <label className="text-[9px] font-bold text-gray-400 uppercase">SMTP Password</label>
+                          <input type="password" className="w-full p-2 bg-white border border-gray-200 rounded-lg text-xs" value={formData.emailConfig?.pass || ''} onChange={(e) => setFormData({ ...formData, emailConfig: { ...formData.emailConfig!, pass: e.target.value } })} />
+                      </div>
+                  </div>
               </div>
           </div>
       </section>
@@ -668,85 +482,6 @@ const Settings: React.FC = () => {
               </div>
               <div className="space-y-2 md:col-span-2"><label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Legacy / Custom Banking Notes</label><textarea className="w-full p-3 bg-gray-50 text-gray-900 rounded-xl border border-gray-200 outline-none focus:ring-1 focus:ring-[#f4d300] text-sm" rows={3} value={formData.businessDetails?.bankingDetails || ''} onChange={(e) => updateBusinessDetails('bankingDetails', e.target.value)} placeholder="Any additional payment instructions..." /></div>
           </div>
-      </section>
-
-      {/* Manual Backup/Restore */}
-      <section className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 space-y-6">
-          <div className="flex items-center gap-3 border-b border-gray-100 pb-6"><div className="bg-[#f4d300] p-3 rounded-2xl text-black"><Database size={24} /></div><h2 className="text-xl font-bold text-gray-900">Local Backup & Restore</h2></div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* File Based */}
-              <div className="space-y-4 p-4 bg-gray-50 rounded-2xl border border-gray-200">
-                  <h3 className="font-bold text-gray-700 text-sm flex items-center gap-2"><FileCode size={16}/> File Backup</h3>
-                  <div className="flex gap-2">
-                      <button onClick={handleBackup} className="flex-1 bg-white text-gray-700 border border-gray-300 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-gray-50 flex items-center justify-center gap-2"><Download size={14} /> Download JSON</button>
-                      <label className="flex-1 cursor-pointer"><div className="w-full bg-white text-gray-700 border border-gray-300 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-gray-50 flex items-center justify-center gap-2"><Upload size={14} /> Upload JSON</div><input type="file" accept=".json" className="hidden" onChange={handleRestore} /></label>
-                  </div>
-              </div>
-
-              {/* Clipboard Based */}
-              <div className="space-y-4 p-4 bg-blue-50 rounded-2xl border border-blue-100">
-                  <h3 className="font-bold text-blue-800 text-sm flex items-center gap-2"><ClipboardCopy size={16}/> Quick Text Backup</h3>
-                  <div className="flex gap-2">
-                      <button onClick={handleCopyToClipboard} className="flex-1 bg-blue-600 text-white py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-blue-700 flex items-center justify-center gap-2 shadow-md"><Copy size={14} /> Copy State</button>
-                      <button onClick={() => setShowManualRestore(!showManualRestore)} className="flex-1 bg-white text-blue-600 border border-blue-200 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-blue-50 flex items-center justify-center gap-2"><FileText size={14} /> Paste State</button>
-                  </div>
-              </div>
-          </div>
-          
-          <div className="p-4 bg-yellow-50 rounded-2xl border border-yellow-100 text-xs text-yellow-800 flex gap-2">
-              <Database size={16} className="shrink-0"/>
-              <p><strong>Hosting on Vercel?</strong> Vercel does not store data permanently. You MUST configure Google Drive or Firebase above, or manually backup/restore your data regularly using these tools.</p>
-          </div>
-
-          {/* Manual Restore Text Area */}
-          {showManualRestore && (
-              <div className="animate-in fade-in slide-in-from-top-4 space-y-4 bg-gray-900 p-6 rounded-3xl border border-gray-800">
-                  <div className="flex justify-between items-center text-white">
-                      <h3 className="font-bold text-sm flex items-center gap-2"><Terminal size={16} className="text-[#f4d300]"/> Manual Restoration Console</h3>
-                      <button onClick={() => setShowManualRestore(false)} className="text-gray-500 hover:text-white"><X size={18}/></button>
-                  </div>
-                  <p className="text-[10px] text-gray-400">Paste the JSON string you previously copied here to restore the entire application state. Warning: This overwrites all current data.</p>
-                  <textarea 
-                      className="w-full h-48 bg-black text-green-400 font-mono text-xs p-4 rounded-xl border border-gray-700 focus:border-[#f4d300] outline-none resize-none"
-                      placeholder='Paste JSON data here... {"config": ...}'
-                      value={manualRestoreData}
-                      onChange={(e) => {
-                          setManualRestoreData(e.target.value);
-                          parseRestoreInput(e.target.value);
-                      }}
-                  />
-                  
-                  {parsedRestoreData && (
-                      <div className="bg-gray-800 p-4 rounded-xl border border-gray-700 space-y-3">
-                          <p className="text-xs font-bold text-white uppercase tracking-widest">Select Data to Restore/Backup:</p>
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                              {Object.keys(restoreSelection).map((key) => (
-                                  <label key={key} className="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-gray-700 transition-colors">
-                                      <input 
-                                          type="checkbox" 
-                                          checked={(restoreSelection as any)[key]} 
-                                          onChange={() => toggleSelection(key as any)}
-                                          className="rounded border-gray-600 bg-gray-700 text-[#f4d300] focus:ring-[#f4d300]"
-                                      />
-                                      <span className="text-xs text-gray-300 capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}</span>
-                                  </label>
-                              ))}
-                          </div>
-                      </div>
-                  )}
-
-                  <div className="flex justify-end">
-                      <button 
-                          onClick={handleManualRestoreSubmit}
-                          disabled={!parsedRestoreData}
-                          className="bg-red-600 text-white px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                      >
-                          <RotateCcw size={14} /> Restore Selected Data
-                      </button>
-                  </div>
-              </div>
-          )}
       </section>
     </div>
   );

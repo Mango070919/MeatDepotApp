@@ -56,6 +56,13 @@ const Cart: React.FC = () => {
       if (config.deliveryCalculationMethod === 'DISTANCE' && distanceKm > 0) {
           // If distance based, use the greater of (Distance * Rate) or Base Fee
           finalDeliveryFee = Math.max(calculatedDeliveryFee, config.deliveryFee);
+      } else if (config.deliveryCalculationMethod === 'ZONES' && config.deliveryZones && distanceKm > 0) {
+          // Zone based calculation
+          const zone = config.deliveryZones.find(z => 
+              (z.minDistance === undefined || distanceKm >= z.minDistance) && 
+              (z.maxDistance === undefined || distanceKm < z.maxDistance)
+          );
+          finalDeliveryFee = zone ? zone.fee : config.deliveryFee;
       } else {
           // Fixed Fee or fallback
           finalDeliveryFee = config.deliveryFee;
@@ -132,8 +139,16 @@ const Cart: React.FC = () => {
           setIsAddressVerified(true);
           if (result.distanceKm) {
               setDistanceKm(result.distanceKm);
-              const rate = config.deliveryRatePerKm || 10;
-              setCalculatedDeliveryFee(result.distanceKm * rate);
+              if (config.deliveryCalculationMethod === 'DISTANCE') {
+                  const rate = config.deliveryRatePerKm || 10;
+                  setCalculatedDeliveryFee(result.distanceKm * rate);
+              } else if (config.deliveryCalculationMethod === 'ZONES' && config.deliveryZones) {
+                  const zone = config.deliveryZones.find(z => 
+                      (z.minDistance === undefined || result.distanceKm! >= z.minDistance) && 
+                      (z.maxDistance === undefined || result.distanceKm! < z.maxDistance)
+                  );
+                  setCalculatedDeliveryFee(zone ? zone.fee : config.deliveryFee);
+              }
           }
           if (result.coordinates) {
               setDeliveryCoordinates(result.coordinates);
@@ -166,8 +181,16 @@ const Cart: React.FC = () => {
                   setSearchQuery('');
                   if (result.distanceKm) {
                       setDistanceKm(result.distanceKm);
-                      const rate = config.deliveryRatePerKm || 10;
-                      setCalculatedDeliveryFee(result.distanceKm * rate);
+                      if (config.deliveryCalculationMethod === 'DISTANCE') {
+                          const rate = config.deliveryRatePerKm || 10;
+                          setCalculatedDeliveryFee(result.distanceKm * rate);
+                      } else if (config.deliveryCalculationMethod === 'ZONES' && config.deliveryZones) {
+                          const zone = config.deliveryZones.find(z => 
+                              (z.minDistance === undefined || result.distanceKm! >= z.minDistance) && 
+                              (z.maxDistance === undefined || result.distanceKm! < z.maxDistance)
+                          );
+                          setCalculatedDeliveryFee(zone ? zone.fee : config.deliveryFee);
+                      }
                   }
                   if (result.coordinates) {
                       setDeliveryCoordinates(result.coordinates);
@@ -289,7 +312,7 @@ const Cart: React.FC = () => {
         if (requestedDate) message += `%0ARequested Date: ${requestedDate}`;
         if (appliedCode) message += `%0APromo Code: ${appliedCode.code}`;
         
-        const phone = config.businessDetails?.contactNumber?.replace(/[^0-9]/g, '') || '844012488038318'; 
+        const phone = config.businessDetails?.contactNumber?.replace(/[^0-9]/g, '') || '27632148131'; 
         
         window.open(`https://wa.me/${phone}?text=${message}`, '_blank');
         

@@ -197,7 +197,12 @@ const AdminDashboard: React.FC = () => {
 
           <button onClick={() => navigate('/admin/ai')} className="p-6 bg-gray-900 rounded-3xl shadow-xl hover:scale-105 transition-transform text-left flex flex-col justify-between h-40 group border border-gray-800">
               <div className="p-3 bg-gray-800 w-fit rounded-2xl text-[#f4d300]"><Terminal size={24} /></div>
-              <div><h3 className="text-xl font-bold text-white">App Manager</h3><p className="text-xs text-gray-500 font-bold uppercase tracking-wider">AI Console & Sync</p></div>
+              <div><h3 className="text-xl font-bold text-white">AI Console</h3><p className="text-xs text-gray-500 font-bold uppercase tracking-wider">Intelligent Assistant</p></div>
+          </button>
+
+          <button onClick={() => navigate('/admin/sync')} className="p-6 bg-blue-900 rounded-3xl shadow-xl hover:scale-105 transition-transform text-left flex flex-col justify-between h-40 group border border-blue-800">
+              <div className="p-3 bg-blue-800 w-fit rounded-2xl text-white"><RefreshCcw size={24} /></div>
+              <div><h3 className="text-xl font-bold text-white">Sync & APIs</h3><p className="text-xs text-blue-300 font-bold uppercase tracking-wider">Cloud & Credentials</p></div>
           </button>
 
           <button onClick={() => navigate('/admin/settings')} className="p-6 bg-white rounded-3xl border border-gray-100 shadow-sm hover:border-[#f4d300] transition-colors text-left flex flex-col justify-between h-40 group">

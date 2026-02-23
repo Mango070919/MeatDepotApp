@@ -45,6 +45,7 @@ import LiveMonitor from './pages/admin/LiveMonitor';
 import AnalyticsReport from './pages/admin/AnalyticsReport';
 import HomeEditor from './pages/admin/HomeEditor';
 import PaymentManager from './pages/admin/PaymentManager';
+import SyncManager from './pages/admin/SyncManager';
 
 // Driver Pages
 import DriverDashboard from './pages/driver/DriverDashboard';
@@ -226,6 +227,7 @@ const AppRoutes: React.FC = () => {
           <Route path="/admin/notifications" element={<PrivateRoute role={UserRole.ADMIN}><NotificationCenter /></PrivateRoute>} />
           <Route path="/admin/live" element={<PrivateRoute role={UserRole.ADMIN}><LiveMonitor /></PrivateRoute>} />
           <Route path="/admin/analytics" element={<PrivateRoute role={UserRole.ADMIN}><AnalyticsReport /></PrivateRoute>} />
+          <Route path="/admin/sync" element={<PrivateRoute role={UserRole.ADMIN}><SyncManager /></PrivateRoute>} />
           <Route path="/admin/home-editor" element={<PrivateRoute role={UserRole.ADMIN}><HomeEditor /></PrivateRoute>} />
           <Route path="/admin/finalize/:orderId" element={<PrivateRoute role={UserRole.ADMIN}><OrderFinalizer /></PrivateRoute>} />
           

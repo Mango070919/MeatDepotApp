@@ -88,7 +88,7 @@ async function startServer() {
               <div style="background: #f9f9f9; padding: 20px; border-radius: 10px; margin-top: 30px;">
                 <h3 style="margin-top: 0;">Contact Details</h3>
                 <p style="margin: 5px 0;"><strong>Address:</strong> ${config.businessDetails?.addressLine1 || '63 Clarence Road, Westering'}</p>
-                <p style="margin: 5px 0;"><strong>Phone:</strong> ${config.businessDetails?.contactNumber || '+27 84 401 2488'}</p>
+                <p style="margin: 5px 0;"><strong>Phone:</strong> ${config.businessDetails?.contactNumber || '+27632148131'}</p>
                 <p style="margin: 5px 0;"><strong>Email:</strong> ${config.socialLinks?.email || 'admin@meatdepot.co.za'}</p>
               </div>
 

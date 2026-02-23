@@ -55,11 +55,6 @@ const Home: React.FC = () => {
   const navigate = useNavigate();
   
   // Modal Local States
-  const [showBannerEdit, setShowBannerEdit] = useState(false);
-  const [bannerText, setBannerText] = useState(config.soldOutBanner?.text || '');
-  const [bannerBg, setBannerBg] = useState(config.soldOutBanner?.backgroundColor || '#dc2626');
-  const [bannerColor, setBannerColor] = useState(config.soldOutBanner?.textColor || '#ffffff');
-
   const [showNoticeEdit, setShowNoticeEdit] = useState(false);
   const [noticeUrl, setNoticeUrl] = useState(config.topNotice?.imageUrl || '');
   const [isUploading, setIsUploading] = useState(false);
@@ -100,22 +95,6 @@ const Home: React.FC = () => {
   }, [config.facebookPageId, config.facebookAccessToken]);
 
   // Sync notice URL when config changes
-  useEffect(() => {
-      if (config.topNotice?.imageUrl) {
-          setNoticeUrl(config.topNotice.imageUrl);
-      }
-  }, [config.topNotice?.imageUrl]);
-
-  // Sync banner text and styles when config changes
-  useEffect(() => {
-    if (config.soldOutBanner) {
-        setBannerText(config.soldOutBanner.text || '');
-        setBannerBg(config.soldOutBanner.backgroundColor || '#dc2626');
-        setBannerColor(config.soldOutBanner.textColor || '#ffffff');
-    }
-  }, [config.soldOutBanner]);
-
-  // Sync leaderboard settings
   useEffect(() => {
       setIsManualLeaderboard(config.enableManualLeaderboard || false);
       setManualEntry1(config.manualLeaderboard?.[0] || '');
@@ -190,36 +169,6 @@ const Home: React.FC = () => {
   }, [orders, users, config.enableManualLeaderboard, config.manualLeaderboard]);
 
   // --- Admin Handlers ---
-  const handleBannerSave = () => {
-      const newConfig = {
-          ...config,
-          soldOutBanner: {
-              visible: true,
-              text: bannerText,
-              backgroundColor: bannerBg,
-              textColor: bannerColor
-          }
-      };
-      updateConfig(newConfig);
-      syncToSheet({ config: newConfig });
-      setShowBannerEdit(false);
-  };
-  
-  const toggleBannerVisibility = () => {
-      updateConfig({
-          ...config,
-          soldOutBanner: {
-              ...config.soldOutBanner,
-              visible: !config.soldOutBanner.visible
-          }
-      });
-  };
-
-  const setBannerPreset = (bg: string, txt: string) => {
-      setBannerBg(bg);
-      setBannerColor(txt);
-  };
-
   const handleNoticeSave = () => {
       updateConfig({
           ...config,
@@ -284,98 +233,6 @@ const Home: React.FC = () => {
           const newOrder = config.postOrder.filter(id => id !== postId);
           updateConfig({ ...config, postOrder: newOrder });
       }
-  };
-
-  // --- Render Sections ---
-
-  const renderSoldOutBanner = () => {
-      const isVisible = config.soldOutBanner?.visible;
-      const bg = config.soldOutBanner?.backgroundColor || '#dc2626';
-      const color = config.soldOutBanner?.textColor || '#ffffff';
-
-      if (!isVisible && !isAdmin) return null;
-
-      return (
-          <div className={`relative -mx-4 mb-4 overflow-hidden transition-all ${isVisible ? 'h-auto' : 'h-12 bg-gray-900 border-b border-gray-800'}`}>
-               {isVisible ? (
-                  <div 
-                    className="p-6 flex flex-col items-center justify-center text-center relative shadow-xl"
-                    style={{ backgroundColor: bg, color: color }}
-                  >
-                      <div className="flex items-center gap-3 animate-pulse">
-                          <AlertTriangle size={32} className="fill-current opacity-80" />
-                          <h2 className="brand-font text-3xl md:text-5xl font-bold italic tracking-tighter">{config.soldOutBanner.text}</h2>
-                          <AlertTriangle size={32} className="fill-current opacity-80" />
-                      </div>
-                      {isAdmin && (
-                          <div className="absolute top-4 right-4 flex gap-2">
-                              <button onClick={() => setShowBannerEdit(true)} className="p-2 bg-black/30 hover:bg-black/50 rounded-full text-white"><Edit2 size={16}/></button>
-                              <button onClick={toggleBannerVisibility} className="p-2 bg-black/30 hover:bg-black/50 rounded-full text-white"><EyeOff size={16}/></button>
-                          </div>
-                      )}
-                  </div>
-               ) : (
-                   <div className="flex items-center justify-between px-6 h-full">
-                       <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Banner Hidden</span>
-                       <div className="flex gap-4">
-                           <button onClick={() => setShowBannerEdit(true)} className="text-xs font-bold text-yellow-500 hover:underline">Edit Banner</button>
-                           <button onClick={toggleBannerVisibility} className="text-xs font-bold text-green-500 hover:underline">Show Banner</button>
-                       </div>
-                   </div>
-               )}
-               
-               {showBannerEdit && (
-                   <div className="absolute inset-0 bg-[#121212] z-20 flex items-center justify-center p-4">
-                       <div className="w-full max-w-2xl bg-gray-900 border border-white/20 rounded-2xl p-6 flex flex-col gap-4 shadow-2xl">
-                           <div className="flex justify-between items-center border-b border-white/10 pb-2">
-                               <h3 className="text-white font-bold flex items-center gap-2"><Palette size={18}/> Edit Banner Style</h3>
-                               <button onClick={() => setShowBannerEdit(false)} className="text-white/50 hover:text-white"><X size={20}/></button>
-                           </div>
-                           
-                           <div className="flex flex-col gap-4 md:flex-row">
-                               <div className="flex-1 space-y-2">
-                                   <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Message</label>
-                                   <input 
-                                      value={bannerText}
-                                      onChange={(e) => setBannerText(e.target.value)}
-                                      className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white font-bold text-lg outline-none focus:border-[#f4d300]"
-                                      placeholder="BANNER TEXT..."
-                                   />
-                               </div>
-                               <div className="space-y-2">
-                                   <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Colors</label>
-                                   <div className="flex gap-2">
-                                       <div className="flex items-center gap-2 bg-white/5 p-2 rounded-xl border border-white/10">
-                                           <span className="text-xs text-white/50">BG</span>
-                                           <input type="color" value={bannerBg} onChange={(e) => setBannerBg(e.target.value)} className="w-8 h-8 rounded cursor-pointer bg-transparent border-none" />
-                                       </div>
-                                       <div className="flex items-center gap-2 bg-white/5 p-2 rounded-xl border border-white/10">
-                                           <span className="text-xs text-white/50">Text</span>
-                                           <input type="color" value={bannerColor} onChange={(e) => setBannerColor(e.target.value)} className="w-8 h-8 rounded cursor-pointer bg-transparent border-none" />
-                                       </div>
-                                   </div>
-                               </div>
-                           </div>
-
-                           <div className="space-y-2">
-                               <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Quick Styles</label>
-                               <div className="flex gap-2 overflow-x-auto pb-2">
-                                   <button onClick={() => setBannerPreset('#dc2626', '#ffffff')} className="px-3 py-1 rounded-full text-xs font-bold bg-red-600 text-white border border-white/20">Sold Out</button>
-                                   <button onClick={() => setBannerPreset('#f4d300', '#000000')} className="px-3 py-1 rounded-full text-xs font-bold bg-[#f4d300] text-black border border-white/20">Notice</button>
-                                   <button onClick={() => setBannerPreset('#2563eb', '#ffffff')} className="px-3 py-1 rounded-full text-xs font-bold bg-blue-600 text-white border border-white/20">Info</button>
-                                   <button onClick={() => setBannerPreset('#16a34a', '#ffffff')} className="px-3 py-1 rounded-full text-xs font-bold bg-green-600 text-white border border-white/20">Success</button>
-                                   <button onClick={() => setBannerPreset('#000000', '#ffffff')} className="px-3 py-1 rounded-full text-xs font-bold bg-black text-white border border-white/20">Dark</button>
-                               </div>
-                           </div>
-
-                           <button onClick={handleBannerSave} className="w-full bg-[#f4d300] text-black py-3 rounded-xl font-bold uppercase tracking-widest hover:scale-[1.01] transition-transform">
-                               Save Changes
-                           </button>
-                       </div>
-                   </div>
-               )}
-          </div>
-      )
   };
 
   const renderHero = () => (
@@ -640,8 +497,6 @@ const Home: React.FC = () => {
               )}
           </div>
       )}
-
-      {renderSoldOutBanner()}
 
       {/* Promotion Bar */}
       {config.announcement && (

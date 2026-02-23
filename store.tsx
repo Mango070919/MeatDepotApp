@@ -220,6 +220,22 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       }
   }, [config.firebaseConfig]);
 
+  // Auto-sync on critical changes
+  useEffect(() => {
+    const triggerSync = async () => {
+      // Only sync if we have a cloud method configured and we've already loaded initial data
+      const hasCloud = config.firebaseConfig?.apiKey || (config.googleDrive?.accessToken && config.googleDrive?.folderId) || config.customDomain?.url;
+      if (hasCloud && hasLoadedFromCloud && !isCloudSyncing) {
+        // Debounce sync slightly to avoid spamming on rapid changes
+        const timeout = setTimeout(() => {
+          syncToSheet();
+        }, 3000);
+        return () => clearTimeout(timeout);
+      }
+    };
+    triggerSync();
+  }, [products, orders, users, posts, promoCodes, config, rawMaterials, productionBatches]);
+
   useEffect(() => { saveData('md_products', products); }, [products]);
   useEffect(() => { saveData('md_orders', orders); }, [orders]);
   useEffect(() => { saveData('md_posts', posts); }, [posts]);

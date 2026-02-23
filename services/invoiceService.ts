@@ -143,7 +143,7 @@ export const generateInvoicePDF = async (order: Order, config: AppConfig, type: 
             companyName: "Meat Depot Gqeberha",
             addressLine1: "63 Clarence Road, Westering",
             addressLine2: "Gqeberha, RSA",
-            contactNumber: "844012488038318",
+            contactNumber: "+27632148131",
             email: "admin@meatdepot.co.za",
             bankingDetails: "",
             invoiceFooterText: ""

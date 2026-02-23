@@ -66,7 +66,7 @@ const FairUsagePolicy: React.FC = () => {
               <div className="space-y-2">
                   <h3 className="font-bold text-white uppercase text-xs tracking-widest">4. Payment</h3>
                   <ul className="list-disc pl-4 space-y-1 text-white/70">
-                      <li>Payment must be made using the available payment methods in the App or as provided by us on WhatsApp (+27 84 401 248 8038).</li>
+                      <li>Payment must be made using the available payment methods in the App or as provided by us on WhatsApp (+27 63 214 8131).</li>
                       <li>Orders will only be processed once payment is confirmed, unless otherwise agreed.</li>
                   </ul>
               </div>
@@ -135,7 +135,7 @@ const FairUsagePolicy: React.FC = () => {
                   <p>For any questions, complaints, or support:</p>
                   <div className="mt-2 text-white/90 space-y-1 font-medium bg-white/5 p-4 rounded-xl">
                       <p className="text-[#f4d300]">Meat Depot</p>
-                      <p>Phone/WhatsApp: +27 84 401 248 8038</p>
+                      <p>Phone/WhatsApp: +27 63 214 8131</p>
                       <p>Email: admin@meatdepot.co.za</p>
                       <p>Website: meatdepot.co.za</p>
                   </div>

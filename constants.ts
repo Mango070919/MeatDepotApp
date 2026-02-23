@@ -39,6 +39,11 @@ export const INITIAL_CONFIG: AppConfig = {
   deliveryFee: 50, // Base/Flat Fee
   deliveryRatePerKm: 10, // R10 per KM default
   deliveryCalculationMethod: 'FIXED',
+  deliveryZones: [
+    { id: '1', name: 'Local (0-5km)', fee: 20, minDistance: 0, maxDistance: 5 },
+    { id: '2', name: 'Mid (5-10km)', fee: 40, minDistance: 5, maxDistance: 10 },
+    { id: '3', name: 'Far (10-20km)', fee: 60, minDistance: 10, maxDistance: 20 },
+  ],
   minimumOrder: 250,
   collectionInstructions: 'Collection in Westering- Address will be shared on WhatsApp during the ordering process',
   homepageBanners: [
@@ -51,7 +56,7 @@ export const INITIAL_CONFIG: AppConfig = {
   promoText: 'DEPOTFRESH: R50 OFF YOUR FIRST ORDER!',
   announcement: '🔥 FREE DELIVERY FOR ORDERS OVER R1500 IN GQEBERHA!',
   logoUrl: 'https://meatdepot.co.za/wp-content/uploads/2026/02/app_logo.webp',
-  invoiceLogoUrl: '', // Default empty (falls back to logoUrl)
+  invoiceLogoUrl: 'https://meatdepot.co.za/wp-content/uploads/2026/02/app_logo.webp',
   brandColor: '#f4d300',
   postOrder: ['post1', 'post2'],
   featuredProductOrder: ['1', '5', '2', '3'],
@@ -66,7 +71,7 @@ export const INITIAL_CONFIG: AppConfig = {
       companyName: "Meat Depot Gqeberha",
       addressLine1: "63 Clarence Road, Westering, 6025",
       addressLine2: "Port Elizabeth, RSA",
-      contactNumber: "844012488038318",
+      contactNumber: "+27632148131",
       email: "admin@meatdepot.co.za",
       bankingDetails: "Account Name: Gold Business Account\nAccount Number: 63174399212\nBranch Code: 250655\nRef: Order Number",
       bankName: "First National Bank",
@@ -115,7 +120,7 @@ export const INITIAL_CONFIG: AppConfig = {
     facebook: 'https://facebook.com/meatdepotgq',
     instagram: 'https://www.instagram.com/meatdepotgq/',
     website: 'https://meatdepot.co.za',
-    whatsapp: 'https://wa.me/844012488038318',
+    whatsapp: 'https://wa.me/27632148131',
     email: 'admin@meatdepot.co.za'
   },
   facebookPageId: '630276440175048'

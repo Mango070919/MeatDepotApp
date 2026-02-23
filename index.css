@@ -1,0 +1,12 @@
+/* Meat Depot Global Styles */
+:root {
+  --brand-yellow: #f4d300;
+  --brand-black: #000000;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--brand-black);
+  color: white;
+}

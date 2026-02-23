@@ -246,7 +246,7 @@ const Navbar: React.FC = () => {
           </a>
 
           <a 
-            href={config.socialLinks?.whatsapp || "https://wa.me/844012488038318"} 
+            href={config.socialLinks?.whatsapp || "https://wa.me/27632148131"} 
             target="_blank" 
             rel="noopener noreferrer" 
             className="w-9 h-9 bg-[#f4d300] text-black rounded-full flex items-center justify-center hover:scale-110 transition-transform shadow-lg shadow-[#f4d300]/20"

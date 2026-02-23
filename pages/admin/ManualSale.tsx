@@ -78,7 +78,15 @@ const ManualSale: React.FC = () => {
   };
 
   const deliveryFee = deliveryType === 'DELIVERY' 
-      ? (config.deliveryCalculationMethod === 'DISTANCE' ? (distance * (config.deliveryRatePerKm || 10)) : config.deliveryFee) 
+      ? (
+          config.deliveryCalculationMethod === 'DISTANCE' 
+          ? (distance * (config.deliveryRatePerKm || 10)) 
+          : (
+              config.deliveryCalculationMethod === 'ZONES' && config.deliveryZones
+              ? (config.deliveryZones.find(z => (z.minDistance === undefined || distance >= z.minDistance) && (z.maxDistance === undefined || distance < z.maxDistance))?.fee || config.deliveryFee)
+              : config.deliveryFee
+          )
+      ) 
       : 0;
   const total = calculateSubtotal() + deliveryFee;
 
