@@ -1,12 +1,14 @@
 
-export const playSound = (type: 'startup' | 'notification' | 'success') => {
+import { AppConfig } from "../types";
+
+export const playSound = (type: 'startup' | 'notification' | 'success', config?: AppConfig) => {
     const sounds = {
         // Gentle chime for entering the app
-        startup: 'https://codeskulptor-demos.commondatastorage.googleapis.com/pang/potted_plant.mp3',
+        startup: config?.startupSoundUrl || 'https://codeskulptor-demos.commondatastorage.googleapis.com/pang/potted_plant.mp3',
         // Distinct beep for status updates
         notification: 'https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/pause.wav',
         // Cash register/Success sound for orders
-        success: 'https://codeskulptor-demos.commondatastorage.googleapis.com/pang/arrow.mp3'
+        success: config?.checkoutSoundUrl || 'https://codeskulptor-demos.commondatastorage.googleapis.com/pang/arrow.mp3'
     };
 
     try {

@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useApp } from '../../store';
-import { Facebook, Instagram, Globe, ArrowUp, Mail, ShieldAlert, Lock, Scale } from 'lucide-react';
+import { Facebook, Instagram, ArrowUp, Mail, ShieldAlert, Lock, Scale } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const Footer: React.FC = () => {
@@ -26,9 +26,6 @@ const Footer: React.FC = () => {
           </a>
           <a href={config.socialLinks?.instagram || "https://www.instagram.com/meatdepotgq/"} target="_blank" rel="noopener noreferrer" className="text-white/40 hover:text-white transition-colors" aria-label="Instagram">
             <Instagram size={20} />
-          </a>
-          <a href={config.socialLinks?.website || "https://meatdepot.co.za"} target="_blank" rel="noopener noreferrer" className="text-white/40 hover:text-white transition-colors" aria-label="Website">
-            <Globe size={20} />
           </a>
           <a href={`mailto:${config.socialLinks?.email || config.businessDetails?.email || "admin@meatdepot.co.za"}`} className="text-white/40 hover:text-white transition-colors" aria-label="Email Us">
             <Mail size={20} />

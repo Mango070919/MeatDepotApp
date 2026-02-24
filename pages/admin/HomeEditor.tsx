@@ -19,7 +19,8 @@ import {
   GripVertical,
   Sparkles,
   Send,
-  Globe
+  Globe,
+  Music
 } from 'lucide-react';
 import { AppConfig } from '../../types';
 import { uploadFile } from '../../services/storageService';
@@ -77,6 +78,15 @@ const resizeImage = (file: File, maxWidth: number, maxHeight: number): Promise<s
   });
 };
 
+const fileToBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = error => reject(error);
+  });
+};
+
 const sectionLabels: Record<string, string> = {
     'hero': 'Hero Banner (Top)',
     'categories': 'Categories List',
@@ -115,7 +125,7 @@ const HomeEditor: React.FC = () => {
   const navigate = useNavigate();
   
   const [formData, setFormData] = useState<AppConfig>(config);
-  const [activeTab, setActiveTab] = useState<'LAYOUT' | 'HERO' | 'NOTICES' | 'POPUP' | 'CONTENT'>('LAYOUT');
+  const [activeTab, setActiveTab] = useState<'LAYOUT' | 'HERO' | 'NOTICES' | 'POPUP' | 'CONTENT' | 'SOCIAL' | 'SOUNDS'>('LAYOUT');
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   
@@ -234,6 +244,32 @@ const HomeEditor: React.FC = () => {
     }
   };
 
+  const handleSoundUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: 'startup' | 'checkout') => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      try {
+        setIsUploading(true);
+        const base64 = await fileToBase64(file);
+        
+        let url = base64;
+        if (config.backupMethod === 'CUSTOM_DOMAIN' || (config.googleDrive?.accessToken && config.googleDrive?.folderId) || config.backupMethod === 'FIREBASE') {
+            const uploadedUrl = await uploadFile(base64, `${field}_sound_${Date.now()}.wav`, config);
+            if (uploadedUrl) url = uploadedUrl;
+        }
+
+        if (field === 'startup') {
+            setFormData({ ...formData, startupSoundUrl: url });
+        } else if (field === 'checkout') {
+            setFormData({ ...formData, checkoutSoundUrl: url });
+        }
+      } catch (error) {
+        alert("Sound upload failed.");
+      } finally {
+        setIsUploading(false);
+      }
+    }
+  };
+
   return (
     <div className="space-y-8 pb-20 pt-8">
       <div className="flex justify-between items-center px-2">
@@ -273,6 +309,9 @@ const HomeEditor: React.FC = () => {
                   </button>
                   <button type="button" onClick={() => setActiveTab('SOCIAL')} className={`flex-1 py-4 px-6 text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer ${activeTab === 'SOCIAL' ? 'text-[#f4d300] bg-gray-900' : 'text-gray-500 hover:bg-gray-50'}`}>
                       <Globe size={16}/> Social
+                  </button>
+                  <button type="button" onClick={() => setActiveTab('SOUNDS')} className={`flex-1 py-4 px-6 text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer ${activeTab === 'SOUNDS' ? 'text-[#f4d300] bg-gray-900' : 'text-gray-500 hover:bg-gray-50'}`}>
+                      <Music size={16}/> Sounds
                   </button>
               </div>
 
@@ -633,6 +672,61 @@ const HomeEditor: React.FC = () => {
                                     placeholder="EAAb..."
                                   />
                                   <p className="text-[9px] text-gray-400">Get this from the Meta for Developers portal.</p>
+                              </div>
+                          </div>
+                      </div>
+                  )}
+                  {/* SOUNDS TAB */}
+                  {activeTab === 'SOUNDS' && (
+                      <div className="space-y-8 max-w-2xl mx-auto animate-in fade-in">
+                          <div className="p-4 bg-blue-50 rounded-2xl text-blue-800 text-sm flex gap-3 border border-blue-100">
+                              <Info size={20} className="shrink-0"/>
+                              <p>Upload .wav or .mp3 files to customize app sounds. These will play on startup and successful checkout.</p>
+                          </div>
+
+                          <div className="space-y-6">
+                              <div className="space-y-2">
+                                  <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Startup Sound</label>
+                                  <div className="flex items-center gap-4 bg-gray-50 p-4 rounded-2xl border border-gray-200">
+                                      <div className="flex-1">
+                                          <input 
+                                            className="w-full bg-transparent outline-none text-xs text-gray-600 font-mono"
+                                            placeholder="Startup Sound URL..."
+                                            value={formData.startupSoundUrl || ''}
+                                            onChange={(e) => setFormData({ ...formData, startupSoundUrl: e.target.value })}
+                                          />
+                                      </div>
+                                      <label className="cursor-pointer bg-gray-900 text-[#f4d300] px-4 py-2 rounded-xl font-bold text-[10px] uppercase flex items-center gap-2 hover:bg-black transition-colors">
+                                          {isUploading ? <Loader2 className="animate-spin" size={14}/> : <Music size={14}/>} 
+                                          {isUploading ? 'Uploading...' : 'Upload .wav'}
+                                          <input type="file" className="hidden" accept="audio/*" onChange={(e) => handleSoundUpload(e, 'startup')} disabled={isUploading} />
+                                      </label>
+                                  </div>
+                                  {formData.startupSoundUrl && (
+                                      <audio controls src={formData.startupSoundUrl} className="w-full h-8 mt-2" />
+                                  )}
+                              </div>
+
+                              <div className="space-y-2">
+                                  <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Checkout Success Sound</label>
+                                  <div className="flex items-center gap-4 bg-gray-50 p-4 rounded-2xl border border-gray-200">
+                                      <div className="flex-1">
+                                          <input 
+                                            className="w-full bg-transparent outline-none text-xs text-gray-600 font-mono"
+                                            placeholder="Checkout Sound URL..."
+                                            value={formData.checkoutSoundUrl || ''}
+                                            onChange={(e) => setFormData({ ...formData, checkoutSoundUrl: e.target.value })}
+                                          />
+                                      </div>
+                                      <label className="cursor-pointer bg-gray-900 text-[#f4d300] px-4 py-2 rounded-xl font-bold text-[10px] uppercase flex items-center gap-2 hover:bg-black transition-colors">
+                                          {isUploading ? <Loader2 className="animate-spin" size={14}/> : <Music size={14}/>} 
+                                          {isUploading ? 'Uploading...' : 'Upload .wav'}
+                                          <input type="file" className="hidden" accept="audio/*" onChange={(e) => handleSoundUpload(e, 'checkout')} disabled={isUploading} />
+                                      </label>
+                                  </div>
+                                  {formData.checkoutSoundUrl && (
+                                      <audio controls src={formData.checkoutSoundUrl} className="w-full h-8 mt-2" />
+                                  )}
                               </div>
                           </div>
                       </div>

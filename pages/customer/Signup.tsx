@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useApp } from '../../store';
 import { User, Mail, Phone, Calendar, Lock, UserPlus, ArrowLeft, Facebook, ShieldCheck, Loader2, AtSign } from 'lucide-react';
@@ -19,7 +19,7 @@ const Signup: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
-  const { users, login, syncToSheet, addNotification } = useApp();
+  const { users, login, syncToSheet, addNotification, config } = useApp();
   const navigate = useNavigate();
 
   const handleSignup = async (e: React.FormEvent) => {
@@ -78,15 +78,86 @@ const Signup: React.FC = () => {
     navigate('/');
   };
   
-  const handleFacebookSignup = () => {
-    // Simulate getting partial data from Facebook.
-    const partialFacebookUser = {
-      name: 'User From Facebook', // Pre-filled name, but user can change it.
-      email: `facebook_${Date.now()}@meatdepot.app`, // A unique email from the provider.
+  const handleFacebookSignup = async () => {
+    if (!config.facebookAppId) {
+      alert('Facebook Login is not configured. Please contact administrator.');
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/auth/facebook/url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          appId: config.facebookAppId,
+          redirectUri: `${window.location.origin}/auth/facebook/callback`
+        })
+      });
+
+      const { url } = await response.json();
+      window.open(url, 'facebook_login', 'width=600,height=700');
+    } catch (err) {
+      console.error(err);
+      setError('Failed to start Facebook login');
+    }
+  };
+
+  useEffect(() => {
+    const handleMessage = async (event: MessageEvent) => {
+      if (event.data?.type === 'FACEBOOK_AUTH_CODE') {
+        const { code } = event.data;
+        handleFacebookExchange(code);
+      }
     };
-    
-    // Navigate to a new page to collect required information.
-    navigate('/complete-profile', { state: { partialUser: partialFacebookUser } });
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [config]);
+
+  const handleFacebookExchange = async (code: string) => {
+    setIsProcessing(true);
+    try {
+      const response = await fetch('/api/auth/facebook/exchange', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code,
+          appId: config.facebookAppId,
+          appSecret: config.facebookAppSecret,
+          redirectUri: `${window.location.origin}/auth/facebook/callback`
+        })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        const fbUser = data.user;
+        // Check if user exists
+        const existingUser = users.find(u => u.email.toLowerCase() === fbUser.email?.toLowerCase());
+        
+        if (existingUser) {
+          login(existingUser);
+          navigate('/');
+        } else {
+          // New user from Facebook - redirect to complete profile
+          navigate('/complete-profile', { 
+            state: { 
+              partialUser: {
+                name: fbUser.name,
+                email: fbUser.email,
+                id: fbUser.id,
+                picture: fbUser.picture?.data?.url
+              } 
+            } 
+          });
+        }
+      } else {
+        setError('Facebook authentication failed');
+      }
+    } catch (err) {
+      console.error(err);
+      setError('Facebook login error');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return (

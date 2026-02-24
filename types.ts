@@ -270,6 +270,8 @@ export interface AppConfig {
   
   logoUrl: string;
   invoiceLogoUrl?: string; // Optional separate logo for invoices
+  startupSoundUrl?: string;
+  checkoutSoundUrl?: string;
   brandColor?: string; // Main accent color (default #f4d300)
   postOrder: string[];
   featuredProductOrder: string[];
@@ -336,4 +338,6 @@ export interface AppConfig {
   };
   facebookAccessToken?: string;
   facebookPageId?: string;
+  facebookAppId?: string;
+  facebookAppSecret?: string;
 }

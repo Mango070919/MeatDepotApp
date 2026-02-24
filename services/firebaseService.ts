@@ -91,6 +91,9 @@ export const saveStateToFirebase = async (data: any) => {
     if (data.productionBatches) {
         batchPromises.push(setDoc(doc(db, collectionName, 'productionBatches'), { items: data.productionBatches, _syncedAt: timestamp }));
     }
+    if (data.activityLogs) {
+        batchPromises.push(setDoc(doc(db, collectionName, 'activityLogs'), { items: data.activityLogs, _syncedAt: timestamp }));
+    }
     
     await Promise.all(batchPromises);
     console.log("State synced to Firebase successfully.");
@@ -107,7 +110,7 @@ export const loadStateFromFirebase = async () => {
 
     try {
         const collectionName = 'meat_depot_system';
-        const docIds = ['config', 'products', 'users', 'orders', 'posts', 'promoCodes', 'rawMaterials', 'productionBatches'];
+        const docIds = ['config', 'products', 'users', 'orders', 'posts', 'promoCodes', 'rawMaterials', 'productionBatches', 'activityLogs'];
         
         const loadPromises = docIds.map(id => getDoc(doc(db, collectionName, id)));
         const snapshots = await Promise.all(loadPromises);

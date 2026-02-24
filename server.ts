@@ -4,6 +4,7 @@ import { createServer as createViteServer } from "vite";
 import path from "path";
 import { fileURLToPath } from "url";
 import nodemailer from "nodemailer";
+import axios from "axios";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -17,6 +18,91 @@ async function startServer() {
   // API Routes
   app.get("/api/health", (req, res) => {
     res.json({ status: "ok", message: "Meat Depot API is running" });
+  });
+
+  // Facebook OAuth Routes
+  app.post("/api/auth/facebook/url", (req, res) => {
+    const { appId, redirectUri } = req.body;
+    
+    if (!appId) {
+      return res.status(400).json({ error: "Facebook App ID is required" });
+    }
+
+    const params = new URLSearchParams({
+      client_id: appId,
+      redirect_uri: redirectUri,
+      scope: "email,public_profile", // Facebook rarely gives phone numbers without special approval
+      response_type: "code",
+      auth_type: "rerequest",
+      display: "popup"
+    });
+
+    const authUrl = `https://www.facebook.com/v18.0/dialog/oauth?${params.toString()}`;
+    res.json({ url: authUrl });
+  });
+
+  app.get("/auth/facebook/callback", async (req, res) => {
+    const { code, state } = req.query;
+    // We need the config to get the App Secret. 
+    // In this architecture, the client usually sends the secret or we have it in env.
+    // However, the user request says "add them to sync & apis", which I did.
+    // But the server doesn't have access to the client's `config` state directly unless we pass it or store it.
+    // For this demo, I'll assume the client will handle the second leg or we'll need a way to pass the secret.
+    
+    // Actually, a better way is to have the client send the code + secret to a "token exchange" endpoint.
+    // But the callback MUST be a server route to handle the redirect.
+    
+    // Let's use a simple HTML response that posts the code back to the opener.
+    res.send(`
+      <html>
+        <body>
+          <script>
+            if (window.opener) {
+              window.opener.postMessage({ type: 'FACEBOOK_AUTH_CODE', code: '${code}' }, '*');
+              window.close();
+            } else {
+              window.location.href = '/';
+            }
+          </script>
+          <p>Authenticating... This window should close automatically.</p>
+        </body>
+      </html>
+    `);
+  });
+
+  app.post("/api/auth/facebook/exchange", async (req, res) => {
+    const { code, appId, appSecret, redirectUri } = req.body;
+
+    try {
+      // 1. Exchange code for access token
+      const tokenResponse = await axios.get('https://graph.facebook.com/v18.0/oauth/access_token', {
+        params: {
+          client_id: appId,
+          client_secret: appSecret,
+          redirect_uri: redirectUri,
+          code: code
+        }
+      });
+
+      const accessToken = tokenResponse.data.access_token;
+
+      // 2. Get user profile
+      const profileResponse = await axios.get('https://graph.facebook.com/me', {
+        params: {
+          fields: 'id,name,email,picture',
+          access_token: accessToken
+        }
+      });
+
+      res.json({
+        success: true,
+        user: profileResponse.data,
+        accessToken
+      });
+    } catch (error: any) {
+      console.error("Facebook Exchange Error:", error.response?.data || error.message);
+      res.status(500).json({ success: false, error: "Failed to exchange Facebook code" });
+    }
   });
 
   // Email Sending Route

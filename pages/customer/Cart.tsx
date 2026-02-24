@@ -282,7 +282,7 @@ const Cart: React.FC = () => {
             body: JSON.stringify({ order, config })
         }).catch(console.error);
 
-        playSound('success');
+        playSound('success', config);
 
         const itemLines = cart.map(item => {
           let desc = `- ${item.quantity} x `;

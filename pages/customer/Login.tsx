@@ -1,8 +1,8 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useApp } from '../../store';
-import { Mail, Lock, LogIn, ChevronRight, ArrowLeft, Shield, Loader2, User } from 'lucide-react';
+import { Mail, Lock, LogIn, ChevronRight, ArrowLeft, Shield, Loader2, User, Facebook } from 'lucide-react';
 import { ADMIN_CREDENTIALS } from '../../constants';
 import { UserRole } from '../../types';
 
@@ -11,8 +11,90 @@ const Login: React.FC = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
-  const { users, login } = useApp();
+  const { users, login, config } = useApp();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const handleMessage = async (event: MessageEvent) => {
+      if (event.data?.type === 'FACEBOOK_AUTH_CODE') {
+        const { code } = event.data;
+        handleFacebookExchange(code);
+      }
+    };
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [config]);
+
+  const handleFacebookExchange = async (code: string) => {
+    setIsLoggingIn(true);
+    try {
+      const response = await fetch('/api/auth/facebook/exchange', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code,
+          appId: config.facebookAppId,
+          appSecret: config.facebookAppSecret,
+          redirectUri: `${window.location.origin}/auth/facebook/callback`
+        })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        const fbUser = data.user;
+        // Check if user exists
+        const existingUser = users.find(u => u.email.toLowerCase() === fbUser.email?.toLowerCase());
+        
+        if (existingUser) {
+          login(existingUser);
+          navigate('/');
+        } else {
+          // New user from Facebook - redirect to complete profile
+          navigate('/complete-profile', { 
+            state: { 
+              partialUser: {
+                name: fbUser.name,
+                email: fbUser.email,
+                id: fbUser.id,
+                picture: fbUser.picture?.data?.url
+              } 
+            } 
+          });
+        }
+      } else {
+        setError('Facebook authentication failed');
+      }
+    } catch (err) {
+      console.error(err);
+      setError('Facebook login error');
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
+
+  const handleFacebookLogin = async () => {
+    if (!config.facebookAppId) {
+      alert('Facebook Login is not configured. Please contact administrator.');
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/auth/facebook/url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          appId: config.facebookAppId,
+          redirectUri: `${window.location.origin}/auth/facebook/callback`
+        })
+      });
+
+      const { url } = await response.json();
+      window.open(url, 'facebook_login', 'width=600,height=700');
+    } catch (err) {
+      console.error(err);
+      setError('Failed to start Facebook login');
+    }
+  };
 
   const getDeviceInfo = () => {
       const ua = navigator.userAgent;
@@ -161,6 +243,22 @@ const Login: React.FC = () => {
         >
           {isLoggingIn && <Loader2 size={16} className="animate-spin" />}
           AUTHENTICATE
+        </button>
+
+        <div className="flex items-center my-6">
+          <div className="flex-grow border-t border-white/10"></div>
+          <span className="flex-shrink mx-4 text-white/30 text-[9px] font-bold uppercase tracking-widest">OR</span>
+          <div className="flex-grow border-t border-white/10"></div>
+        </div>
+
+        <button 
+          type="button"
+          onClick={handleFacebookLogin}
+          disabled={isLoggingIn}
+          className="w-full bg-[#1877F2] text-white py-5 rounded-3xl font-bold text-xs tracking-widest shadow-2xl shadow-blue-500/10 hover:scale-105 transition-all uppercase flex items-center justify-center gap-3 disabled:opacity-70"
+        >
+          <Facebook size={20} />
+          Continue with Facebook
         </button>
 
         <div className="pt-6 text-center">

@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../store';
-import { Save, Briefcase, Camera, Globe, Package, Truck, Link, Loader2, Eye, Database, Flame, Server, Key, Mail, Sparkles, HardDrive, X, Plus } from 'lucide-react';
+import { Save, Briefcase, Camera, Globe, Package, Truck, Link, Loader2, Eye, Database, Flame, Server, Key, Mail, Sparkles, HardDrive, X, Plus, Facebook } from 'lucide-react';
 import { AppConfig, BusinessDetails } from '../../types';
 import { useNavigate } from 'react-router-dom';
 
@@ -430,6 +430,27 @@ const Settings: React.FC = () => {
                       <div className="space-y-1">
                           <label className="text-[9px] font-bold text-gray-400 uppercase">SMTP Password</label>
                           <input type="password" className="w-full p-2 bg-white border border-gray-200 rounded-lg text-xs" value={formData.emailConfig?.pass || ''} onChange={(e) => setFormData({ ...formData, emailConfig: { ...formData.emailConfig!, pass: e.target.value } })} />
+                      </div>
+                  </div>
+              </div>
+
+              {/* Facebook OAuth Config */}
+              <div className="space-y-4 p-6 bg-indigo-50/30 rounded-2xl border border-indigo-100">
+                  <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2"><Facebook size={16} className="text-indigo-600" /> Facebook Login</h3>
+                  <div className="space-y-3">
+                      <div className="space-y-1">
+                          <label className="text-[9px] font-bold text-gray-400 uppercase">App ID</label>
+                          <input className="w-full p-2 bg-white border border-gray-200 rounded-lg text-xs" value={formData.facebookAppId || ''} onChange={(e) => setFormData({ ...formData, facebookAppId: e.target.value })} placeholder="1234567890" />
+                      </div>
+                      <div className="space-y-1">
+                          <label className="text-[9px] font-bold text-gray-400 uppercase">App Secret</label>
+                          <input type="password" className="w-full p-2 bg-white border border-gray-200 rounded-lg text-xs" value={formData.facebookAppSecret || ''} onChange={(e) => setFormData({ ...formData, facebookAppSecret: e.target.value })} placeholder="••••••••" />
+                      </div>
+                      <div className="pt-2">
+                          <p className="text-[9px] text-gray-400 font-bold uppercase mb-1">Callback URL:</p>
+                          <code className="text-[9px] bg-white p-1 rounded border border-gray-200 block break-all">
+                              {window.location.origin}/auth/facebook/callback
+                          </code>
                       </div>
                   </div>
               </div>

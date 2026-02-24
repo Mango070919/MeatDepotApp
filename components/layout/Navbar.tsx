@@ -1,5 +1,5 @@
 
-import { ShoppingCart, User, MessageSquare, Menu, X, Home, ShoppingBag, ClipboardList, LogIn, UserPlus, LogOut, ArrowRight, Globe, Settings, Cloud, RefreshCw, Heart, ArrowUp, ArrowDown, Shield, LayoutDashboard, ExternalLink, FileText, HelpCircle, Package, Users } from 'lucide-react';
+import { ShoppingCart, User, MessageSquare, Menu, X, Home, ShoppingBag, ClipboardList, LogIn, UserPlus, LogOut, ArrowRight, Settings, Cloud, RefreshCw, Heart, ArrowUp, ArrowDown, Shield, LayoutDashboard, ExternalLink, FileText, HelpCircle, Package, Users } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../store';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
@@ -235,15 +235,6 @@ const Navbar: React.FC = () => {
               </span>
             )}
           </button>
-
-          <a 
-            href={config.socialLinks?.website || "https://meatdepot.co.za"} 
-            target="_blank" 
-            rel="noopener noreferrer" 
-            className="w-9 h-9 bg-white/5 text-white/50 rounded-full flex items-center justify-center hover:text-white hover:bg-white/10 transition-all border border-white/10"
-          >
-            <Globe size={18} />
-          </a>
 
           <a 
             href={config.socialLinks?.whatsapp || "https://wa.me/27632148131"} 

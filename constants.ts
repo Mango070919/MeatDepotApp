@@ -57,6 +57,8 @@ export const INITIAL_CONFIG: AppConfig = {
   announcement: '🔥 FREE DELIVERY FOR ORDERS OVER R1500 IN GQEBERHA!',
   logoUrl: 'https://meatdepot.co.za/wp-content/uploads/2026/02/app_logo.webp',
   invoiceLogoUrl: 'https://meatdepot.co.za/wp-content/uploads/2026/02/app_logo.webp',
+  startupSoundUrl: 'https://codeskulptor-demos.commondatastorage.googleapis.com/pang/potted_plant.mp3',
+  checkoutSoundUrl: 'https://codeskulptor-demos.commondatastorage.googleapis.com/pang/arrow.mp3',
   brandColor: '#f4d300',
   postOrder: ['post1', 'post2'],
   featuredProductOrder: ['1', '5', '2', '3'],
@@ -123,5 +125,7 @@ export const INITIAL_CONFIG: AppConfig = {
     whatsapp: 'https://wa.me/27632148131',
     email: 'admin@meatdepot.co.za'
   },
-  facebookPageId: '630276440175048'
+  facebookPageId: '630276440175048',
+  facebookAppId: '',
+  facebookAppSecret: ''
 };

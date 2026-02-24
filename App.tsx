@@ -6,6 +6,7 @@ import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
 import StartupNotice from './components/common/StartupNotice';
 import PreviewBanner from './components/common/PreviewBanner';
+import FacebookSDK from './components/common/FacebookSDK';
 import { CheckCircle, XCircle } from 'lucide-react';
 
 // Customer Pages
@@ -175,6 +176,7 @@ const LayoutManager: React.FC<{ children: React.ReactNode }> = ({ children }) =>
         <div className={`min-h-screen flex flex-col ${isAdminRoute || isDriverRoute || isPOSRoute ? 'bg-gray-50' : 'bg-black'}`}>
             <ThemeInjector />
             <ActivityHeartbeat />
+            <FacebookSDK />
             <StartupNotice />
             <PreviewBanner />
             {showNavbar && location.pathname !== '/admin/live' && <Navbar />}

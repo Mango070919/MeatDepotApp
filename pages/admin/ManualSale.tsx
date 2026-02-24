@@ -28,6 +28,7 @@ import {
 import { Product, User, OrderStatus, UnitType, CartItem, UserRole } from '../../types';
 import { generateInvoicePDF } from '../../services/invoiceService';
 import { uploadFile } from '../../services/storageService';
+import { playSound } from '../../services/soundService';
 
 const ManualSale: React.FC = () => {
   const { products, users, placeOrder, config, addNotification, login, syncToSheet } = useApp();
@@ -120,6 +121,7 @@ const ManualSale: React.FC = () => {
       }
       const order = getOrderObject();
       placeOrder(order, 0); // Adds to order list
+      playSound('success', config);
       
       // Trigger Email
       if (order.contactEmail) {

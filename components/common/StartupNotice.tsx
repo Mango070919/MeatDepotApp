@@ -21,7 +21,7 @@ const StartupNotice: React.FC = () => {
   const handleDismiss = () => {
     sessionStorage.setItem('startupNoticeDismissed', 'true');
     setIsOpen(false);
-    playSound('startup');
+    playSound('startup', config);
     // Ensure we start on the home page when the user acknowledges the notice
     navigate('/');
   };
