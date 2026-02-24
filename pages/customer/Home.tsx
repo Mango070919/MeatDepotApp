@@ -283,11 +283,7 @@ const Home: React.FC = () => {
   );
 
   const renderCategories = () => {
-      const hasPastOrders = currentUser && orders.some(o => o.customerId === currentUser.id);
       const categories = ['Biltong', 'Steaks', 'Braai Packs', 'Specials'];
-      if (hasPastOrders) {
-          categories.unshift('Buy Again');
-      }
 
       return (
       <section className="space-y-6 px-2 mb-12">
@@ -509,143 +505,12 @@ const Home: React.FC = () => {
         </div>
       )}
       
-      {currentUser && (
-          <div className="flex items-center justify-between bg-white/5 p-4 rounded-2xl border border-white/10 mb-8">
-              <div className="flex items-center gap-3">
-                  <div className="bg-[#f4d300] text-black p-2 rounded-full">
-                      <Coins size={20} />
-                  </div>
-                  <div>
-                      <p className="text-[10px] text-white/50 font-bold uppercase tracking-widest">Loyalty Balance</p>
-                      <p className="text-white font-bold text-lg">{currentUser.loyaltyPoints || 0} Points</p>
-                  </div>
-              </div>
-              <p className="text-[10px] text-white/30 text-right">R500 = 1 Point</p>
-          </div>
-      )}
-
       {/* Dynamic Sections */}
-      {config.homeSectionOrder.map((sectionId) => (
+      {config.homeSectionOrder.filter(id => id !== 'leaderboard').map((sectionId) => (
           <div key={sectionId}>
               {sectionMap[sectionId] ? sectionMap[sectionId]() : null}
           </div>
       ))}
-
-      {/* Top Buyers Leaderboard */}
-      {topBuyers.length > 0 && (
-          <section className="space-y-6 px-2 mb-12 border-t border-white/10 pt-10">
-              <div className="flex flex-col items-center text-center space-y-2 relative">
-                  {isAdmin && (
-                      <button 
-                        onClick={() => setIsEditingLeaderboard(true)}
-                        className="absolute right-0 top-0 p-2 text-white/30 hover:text-[#f4d300] transition-colors"
-                        title="Edit Leaderboard"
-                      >
-                          <Settings size={18} />
-                      </button>
-                  )}
-                  <div className="bg-gradient-to-tr from-[#f4d300] to-yellow-200 text-black p-4 rounded-full shadow-lg shadow-yellow-500/20 mb-2">
-                      <Trophy size={32} />
-                  </div>
-                  <h2 className="brand-font text-3xl font-bold italic text-white">Top Buyers of the Month</h2>
-                  <p className="text-white/40 text-[10px] font-bold tracking-[0.3em] uppercase max-w-xs">Earn points by topping the charts! Resets Monthly.</p>
-              </div>
-              
-              <div className="grid grid-cols-3 gap-4 items-end">
-                  {topBuyers[1] && (
-                      <div className="bg-white/5 rounded-t-[30px] rounded-b-[20px] p-4 text-center border border-white/5 flex flex-col items-center gap-2 h-36 justify-end relative">
-                          <div className="absolute -top-4 w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center text-black font-bold shadow-lg text-sm border-2 border-white">2</div>
-                          <span className="text-[10px] text-white/50 font-bold uppercase tracking-widest">Win 2 Pts</span>
-                          <span className="font-bold text-white text-lg">{topBuyers[1].name}</span>
-                          <div className="h-16 w-full bg-white/5 rounded-xl"></div>
-                      </div>
-                  )}
-                  {topBuyers[0] && (
-                      <div className="bg-[#f4d300]/10 rounded-t-[30px] rounded-b-[20px] p-4 text-center border border-[#f4d300]/30 flex flex-col items-center gap-2 h-44 justify-end relative shadow-[0_0_30px_rgba(244,211,0,0.1)]">
-                          <div className="absolute -top-5 w-12 h-12 bg-[#f4d300] rounded-full flex items-center justify-center text-black font-bold shadow-xl text-lg border-2 border-white"><Medal size={20}/></div>
-                          <span className="text-[10px] text-[#f4d300] font-bold uppercase tracking-widest">Win 4 Pts</span>
-                          <span className="font-bold text-white text-xl">{topBuyers[0].name}</span>
-                          <div className="h-24 w-full bg-[#f4d300] rounded-xl opacity-80"></div>
-                      </div>
-                  )}
-                  {topBuyers[2] && (
-                      <div className="bg-white/5 rounded-t-[30px] rounded-b-[20px] p-4 text-center border border-white/5 flex flex-col items-center gap-2 h-32 justify-end relative">
-                          <div className="absolute -top-4 w-10 h-10 bg-yellow-700 rounded-full flex items-center justify-center text-white font-bold shadow-lg text-sm border-2 border-white">3</div>
-                          <span className="text-[10px] text-white/50 font-bold uppercase tracking-widest">Win 1 Pt</span>
-                          <span className="font-bold text-white text-lg">{topBuyers[2].name}</span>
-                          <div className="h-12 w-full bg-white/5 rounded-xl"></div>
-                      </div>
-                  )}
-              </div>
-          </section>
-      )}
-
-      {/* Leaderboard Editor Modal */}
-      {isEditingLeaderboard && (
-          <div className="fixed inset-0 bg-black/90 z-[200] flex items-center justify-center p-6 animate-in fade-in">
-              <div className="bg-[#121212] w-full max-w-lg rounded-[40px] border border-white/10 shadow-2xl p-8 space-y-6">
-                  <div className="flex justify-between items-center">
-                      <h3 className="text-xl font-bold text-white flex items-center gap-2"><Trophy size={20} className="text-[#f4d300]"/> Leaderboard Settings</h3>
-                      <button onClick={() => setIsEditingLeaderboard(false)} className="text-white/50 hover:text-white"><X size={20}/></button>
-                  </div>
-
-                  <div className="bg-white/5 p-4 rounded-2xl border border-white/10 flex justify-between items-center">
-                      <div>
-                          <p className="text-sm font-bold text-white">Manual Selection</p>
-                          <p className="text-[10px] text-white/50">Override automatic calculation</p>
-                      </div>
-                      <button 
-                          onClick={() => setIsManualLeaderboard(!isManualLeaderboard)}
-                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isManualLeaderboard ? 'bg-[#f4d300]' : 'bg-gray-600'}`}
-                      >
-                          <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${isManualLeaderboard ? 'translate-x-6' : 'translate-x-1'}`} />
-                      </button>
-                  </div>
-
-                  {isManualLeaderboard && (
-                      <div className="space-y-4">
-                          <div className="space-y-2">
-                              <label className="text-[10px] font-bold text-[#f4d300] uppercase tracking-widest">1st Place (Gold)</label>
-                              <select 
-                                  className="w-full bg-black border border-white/20 rounded-xl p-3 text-white text-sm outline-none focus:border-[#f4d300]"
-                                  value={manualEntry1}
-                                  onChange={(e) => setManualEntry1(e.target.value)}
-                              >
-                                  <option value="">Select User...</option>
-                                  {users.map(u => <option key={u.id} value={u.id}>{u.name} ({u.email})</option>)}
-                              </select>
-                          </div>
-                          <div className="space-y-2">
-                              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">2nd Place (Silver)</label>
-                              <select 
-                                  className="w-full bg-black border border-white/20 rounded-xl p-3 text-white text-sm outline-none focus:border-[#f4d300]"
-                                  value={manualEntry2}
-                                  onChange={(e) => setManualEntry2(e.target.value)}
-                              >
-                                  <option value="">Select User...</option>
-                                  {users.map(u => <option key={u.id} value={u.id}>{u.name} ({u.email})</option>)}
-                              </select>
-                          </div>
-                          <div className="space-y-2">
-                              <label className="text-[10px] font-bold text-yellow-700 uppercase tracking-widest">3rd Place (Bronze)</label>
-                              <select 
-                                  className="w-full bg-black border border-white/20 rounded-xl p-3 text-white text-sm outline-none focus:border-[#f4d300]"
-                                  value={manualEntry3}
-                                  onChange={(e) => setManualEntry3(e.target.value)}
-                              >
-                                  <option value="">Select User...</option>
-                                  {users.map(u => <option key={u.id} value={u.id}>{u.name} ({u.email})</option>)}
-                              </select>
-                          </div>
-                      </div>
-                  )}
-
-                  <button onClick={saveLeaderboardSettings} className="w-full bg-[#f4d300] text-black py-4 rounded-2xl font-bold text-xs uppercase tracking-widest hover:scale-105 transition-transform flex items-center justify-center gap-2">
-                      <Save size={16} /> Save Changes
-                  </button>
-              </div>
-          </div>
-      )}
 
       <style>{`
         @keyframes marquee {

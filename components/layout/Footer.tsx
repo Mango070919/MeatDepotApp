@@ -62,6 +62,12 @@ const Footer: React.FC = () => {
         <div className="flex flex-col items-center gap-4">
             <div className="text-[#f4d300] font-bold text-[10px] tracking-widest mt-6">END OF PAGE</div>
             <button 
+                onClick={() => navigate('/admin-login')}
+                className="text-white/20 hover:text-[#f4d300] text-[10px] font-bold uppercase tracking-[0.3em] transition-colors flex items-center gap-2"
+            >
+                <Lock size={12} /> Staff Login
+            </button>
+            <button 
                 onClick={scrollToTop}
                 className="text-white/30 hover:text-white text-[9px] font-bold uppercase tracking-widest flex items-center gap-1 transition-colors"
             >

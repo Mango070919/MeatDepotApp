@@ -3,12 +3,12 @@ import React, { useState } from 'react';
 import { useApp } from '../../store';
 import { Trash2, ShoppingBag, MapPin, Truck, MessageCircle, Store, ArrowLeft, Coins, Loader2, CheckCircle, Navigation, Ticket, CreditCard, X, Phone, Mail, User, Package, Search, Check } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { OrderStatus, CartItem, UnitType, PromoCode } from '../../types';
+import { OrderStatus, CartItem, UnitType, PromoCode, Order } from '../../types';
 import { validateAddress } from '../../services/geminiService';
 import { playSound } from '../../services/soundService';
 
 const Cart: React.FC = () => {
-  const { cart, removeFromCart, placeOrder, currentUser, config, products, addToCart, promoCodes } = useApp();
+  const { cart, removeFromCart, placeOrder, config, products, addToCart, promoCodes, clearCart } = useApp();
   const navigate = useNavigate();
   const [deliveryType, setDeliveryType] = useState<'DELIVERY' | 'COLLECTION'>('COLLECTION');
   const [address, setAddress] = useState('');
@@ -31,11 +31,12 @@ const Cart: React.FC = () => {
   const [calculatedDeliveryFee, setCalculatedDeliveryFee] = useState(0);
   const [deliveryCoordinates, setDeliveryCoordinates] = useState<{lat: number, lng: number} | undefined>(undefined);
 
-  // Payment Link Request Modal State
-  const [showPaymentRequestModal, setShowPaymentRequestModal] = useState(false);
-  const [confirmName, setConfirmName] = useState(currentUser?.name || '');
-  const [confirmPhone, setConfirmPhone] = useState(currentUser?.phone || '');
-  const [confirmEmail, setConfirmEmail] = useState(currentUser?.email || '');
+  // Checkout Form State
+  const [showCheckoutForm, setShowCheckoutForm] = useState(false);
+  const [confirmName, setConfirmName] = useState('');
+  const [confirmPhone, setConfirmPhone] = useState('');
+  const [confirmEmail, setConfirmEmail] = useState('');
+  const [deliveryTime, setDeliveryTime] = useState('');
 
   const calculateItemPrice = (item: CartItem): number => {
     if (item.product.unit === UnitType.KG && item.weight) {
@@ -88,17 +89,12 @@ const Cart: React.FC = () => {
   
   const handlePointsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const val = parseInt(e.target.value) || 0;
-      const userPoints = currentUser?.loyaltyPoints || 0;
-      if (val < 0 || val > userPoints || (val * pointValue) > (subtotal - discountAmount)) return; 
+      if (val < 0 || (val * pointValue) > (subtotal - discountAmount)) return; 
       setPointsToRedeem(val);
   };
 
   const handleApplyPromo = () => {
       if (!promoInput) return;
-      if (!currentUser) {
-          alert("Please login to use codes.");
-          return;
-      }
       
       const code = promoCodes.find(c => c.code.toUpperCase() === promoInput.toUpperCase());
       
@@ -110,12 +106,6 @@ const Cart: React.FC = () => {
       
       if (!code.active) {
           setPromoError('This code is no longer active.');
-          setAppliedCode(null);
-          return;
-      }
-      
-      if (code.usedBy.includes(currentUser.id)) {
-          setPromoError('You have already used this code.');
           setAppliedCode(null);
           return;
       }
@@ -209,115 +199,73 @@ const Cart: React.FC = () => {
   };
 
   const handleInitialCheckout = () => {
-    if (!currentUser) {
-        alert("Please login to complete your order.");
-        navigate('/login');
-        return;
-    }
-
     if (deliveryType === 'DELIVERY' && !address) {
         alert("Please provide a delivery address.");
         return;
     }
 
-    if (config.paymentEnabled) {
-        // Show modal to confirm details for payment link
-        setShowPaymentRequestModal(true);
-    } else {
-        // Proceed with standard WhatsApp order
-        processOrder(false);
-    }
+    setShowCheckoutForm(true);
   };
 
-  const processOrder = (isPaymentRequest: boolean) => {
-    let finalCodeString = appliedCode ? appliedCode.code : '';
-    if (pointsToRedeem > 0) {
-        const loyaltyString = `LOYALTY-${currentUser?.id.substring(0,4)}-${Date.now().toString().substring(8)}`;
-        finalCodeString = finalCodeString ? `${finalCodeString} + ${loyaltyString}` : loyaltyString;
+  const processOrder = () => {
+    if (!confirmName) {
+        alert("Please enter your name and surname.");
+        return;
     }
 
-    const order = {
-      id: Math.random().toString(36).substr(2, 9).toUpperCase(),
-      customerId: currentUser?.id || '',
-      customerName: isPaymentRequest ? confirmName : (currentUser?.name || ''),
-      items: [...cart],
-      total,
-      discountUsed: totalDiscount,
-      pointsEarned: Math.floor(total / 500),
-      status: isPaymentRequest ? OrderStatus.PAYMENT_PENDING : OrderStatus.PENDING,
-      createdAt: new Date().toISOString(),
-      deliveryType,
-      deliveryAddress: deliveryType === 'DELIVERY' ? address : '',
-      deliveryCoordinates: deliveryType === 'DELIVERY' ? deliveryCoordinates : undefined,
-      distanceKm: deliveryType === 'DELIVERY' ? distanceKm : undefined,
-      deliveryFee: finalDeliveryFee,
-      promoCodeApplied: finalCodeString,
-      messages: [],
-      // Store contact details for admin to use in Payment Manager
-      contactPhone: isPaymentRequest ? confirmPhone : currentUser?.phone,
-      contactEmail: isPaymentRequest ? confirmEmail : currentUser?.email
+    if (!requestedDate || !deliveryTime) {
+        alert("Please select a date and time for " + (deliveryType === 'DELIVERY' ? 'delivery' : 'collection') + ".");
+        return;
+    }
+
+    const orderId = `MD-${Math.floor(1000 + Math.random() * 9000)}`;
+    
+    const newOrder: Order = {
+        id: orderId,
+        customerId: 'anonymous',
+        customerName: confirmName,
+        contactPhone: confirmPhone,
+        contactEmail: confirmEmail,
+        items: [...cart],
+        total: total,
+        status: OrderStatus.PENDING,
+        createdAt: new Date().toISOString(),
+        deliveryType: deliveryType,
+        deliveryAddress: deliveryType === 'DELIVERY' ? address : undefined,
+        deliveryFee: finalDeliveryFee,
+        messages: [],
+        promoCodeApplied: appliedCode?.id
     };
 
-    if (isPaymentRequest) {
-        // --- PAYMENT LINK REQUEST FLOW ---
-        placeOrder(order, pointsToRedeem, appliedCode?.id);
-        
-        // Trigger Email
-        fetch('/api/send-order-email', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ order, config })
-        }).catch(console.error);
+    const itemLines = cart.map(item => {
+      let desc = `- ${item.quantity} x `;
+      if (item.product.unit === UnitType.KG && item.weight) {
+        desc += `${item.weight}g ${item.product.name}`;
+      } else {
+        desc += item.product.name;
+      }
+      if (item.selectedOptions && item.selectedOptions.length > 0) {
+          desc += ` [${item.selectedOptions.join(', ')}]`;
+      }
+      if (item.vacuumPacked) desc += ` (Vacuum Packed)`;
+      return desc;
+    }).join('%0A');
 
-        setShowPaymentRequestModal(false);
-        navigate('/payment/success'); // Reuse success page or create a specific "Request Sent" page
-    } else {
-        // --- WHATSAPP FLOW ---
-        placeOrder(order, pointsToRedeem, appliedCode?.id);
-        
-        // Trigger Email
-        fetch('/api/send-order-email', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ order, config })
-        }).catch(console.error);
+    const totalLine = `Total: R${total.toFixed(2)}`;
+    const deliveryLine = deliveryType === 'DELIVERY' ? `Delivery Fee: R${finalDeliveryFee.toFixed(2)}` : 'Collection';
+    const addressLine = deliveryType === 'DELIVERY' ? `Address: ${address}` : '';
+    const detailsLine = `Order #: ${orderId}%0AName: ${confirmName}%0AEmail: ${confirmEmail || 'N/A'}%0APhone: ${confirmPhone || 'N/A'}%0ARequested ${deliveryType === 'DELIVERY' ? 'Delivery' : 'Collection'}: ${requestedDate} at ${deliveryTime}`;
 
-        playSound('success', config);
-
-        const itemLines = cart.map(item => {
-          let desc = `- ${item.quantity} x `;
-          if (item.product.unit === UnitType.KG && item.weight) {
-            desc += `${item.weight}g ${item.product.name}`;
-          } else {
-            desc += item.product.name;
-          }
-          if (item.selectedOptions && item.selectedOptions.length > 0) {
-              desc += ` [${item.selectedOptions.join(', ')}]`;
-          }
-          if (item.vacuumPacked) desc += ` (Vacuum Packed)`;
-          return desc;
-        }).join('%0A');
-
-        let message = `Hi Meat Depot, I'd like to place an order:%0A%0A${itemLines}%0A%0ATotal: R${total.toFixed(2)}`;
-        
-        if (deliveryType === 'DELIVERY') {
-            message += `%0A%0ADelivery Address:%0A${address}`;
-            if (deliveryCoordinates) {
-                message += `%0A(Location: https://maps.google.com/?q=${deliveryCoordinates.lat},${deliveryCoordinates.lng})`;
-            }
-        } else {
-            message += `%0A%0ACollection at Store`;
-        }
-        
-        if (requestedDate) message += `%0ARequested Date: ${requestedDate}`;
-        if (appliedCode) message += `%0APromo Code: ${appliedCode.code}`;
-        
-        const phone = config.businessDetails?.contactNumber?.replace(/[^0-9]/g, '') || '27632148131'; 
-        
-        window.open(`https://wa.me/${phone}?text=${message}`, '_blank');
-        
-        navigate('/orders');
-    }
+    const message = `*NEW ORDER FROM MEAT DEPOT*%0A%0A${detailsLine}%0A%0A*Items:*%0A${itemLines}%0A%0A${deliveryLine}%0A${addressLine}%0A*${totalLine}*`;
+    
+    const phone = config.businessDetails?.contactNumber?.replace(/[^0-9]/g, '') || '27632148131'; 
+    
+    // Save to store
+    placeOrder(newOrder, appliedCode?.id);
+    
+    window.open(`https://wa.me/${phone}?text=${message}`, '_blank');
+    
+    navigate('/');
   };
 
   return (
@@ -475,33 +423,6 @@ const Cart: React.FC = () => {
                     {promoError && <p className="text-red-500 text-xs font-bold">{promoError}</p>}
                     {appliedCode && <p className="text-green-500 text-xs font-bold flex items-center gap-1"><Check size={12}/> Code Applied: {appliedCode.code}</p>}
                 </div>
-
-                {currentUser && currentUser.loyaltyPoints > 0 && (
-                    <div className="space-y-2 pt-4 border-t border-white/10">
-                        <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest flex justify-between">
-                            <span>Use Loyalty Points</span>
-                            <span className="text-[#f4d300]">{currentUser.loyaltyPoints} Available (R{currentUser.loyaltyPoints * pointValue})</span>
-                        </label>
-                        <div className="flex items-center gap-4">
-                            <input 
-                                type="number" 
-                                className="w-20 p-2 bg-black/50 border border-white/10 rounded-xl text-center text-white font-bold outline-none"
-                                value={pointsToRedeem}
-                                onChange={handlePointsChange}
-                                min={0}
-                                max={currentUser.loyaltyPoints}
-                            />
-                            <input 
-                                type="range" 
-                                className="flex-1 accent-[#f4d300] h-2 bg-white/10 rounded-lg appearance-none cursor-pointer"
-                                value={pointsToRedeem}
-                                onChange={handlePointsChange}
-                                min={0}
-                                max={Math.min(currentUser.loyaltyPoints, Math.floor(subtotal / pointValue))}
-                            />
-                        </div>
-                    </div>
-                )}
             </div>
 
             {/* Totals */}
@@ -532,32 +453,33 @@ const Cart: React.FC = () => {
                 onClick={handleInitialCheckout}
                 className="w-full bg-[#f4d300] text-black py-5 rounded-[30px] font-bold text-sm uppercase tracking-widest shadow-xl shadow-[#f4d300]/20 flex items-center justify-center gap-3 hover:scale-[1.02] transition-transform"
             >
-                {config.paymentEnabled ? <CreditCard size={20} /> : <MessageCircle size={20} />}
-                {config.paymentEnabled ? 'Checkout & Request Payment' : 'Order on WhatsApp'}
+                <MessageCircle size={20} />
+                Order on WhatsApp
             </button>
         </div>
       )}
 
-      {/* Payment Link Request Modal */}
-      {showPaymentRequestModal && (
+      {/* Checkout Form Modal */}
+      {showCheckoutForm && (
           <div className="fixed inset-0 bg-black/90 glass z-[150] flex items-center justify-center p-6 animate-in fade-in duration-300">
               <div className="bg-[#121212] w-full max-w-md rounded-[40px] border border-white/10 shadow-2xl p-8 space-y-6">
                   <div className="flex justify-between items-center border-b border-white/10 pb-4">
                       <h3 className="text-xl font-bold text-white">Confirm Details</h3>
-                      <button onClick={() => setShowPaymentRequestModal(false)} className="text-white/50 hover:text-white"><X size={20}/></button>
+                      <button onClick={() => setShowCheckoutForm(false)} className="text-white/50 hover:text-white"><X size={20}/></button>
                   </div>
                   
                   <p className="text-white/60 text-sm">
-                      We will use these details to send you a secure payment link via WhatsApp or Email shortly.
+                      Please provide your details to complete the order via WhatsApp.
                   </p>
 
                   <div className="space-y-4">
                       <div className="space-y-1">
-                          <label className="text-[10px] font-bold text-[#f4d300] uppercase tracking-widest">Full Name</label>
+                          <label className="text-[10px] font-bold text-[#f4d300] uppercase tracking-widest">Name & Surname</label>
                           <div className="relative">
                               <User className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" size={16}/>
                               <input 
                                   className="w-full pl-10 p-3 bg-black/50 border border-white/20 rounded-xl text-white outline-none focus:border-[#f4d300]"
+                                  placeholder="John Doe"
                                   value={confirmName}
                                   onChange={e => setConfirmName(e.target.value)}
                               />
@@ -569,29 +491,53 @@ const Cart: React.FC = () => {
                               <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" size={16}/>
                               <input 
                                   className="w-full pl-10 p-3 bg-black/50 border border-white/20 rounded-xl text-white outline-none focus:border-[#f4d300]"
+                                  placeholder="082 123 4567"
                                   value={confirmPhone}
                                   onChange={e => setConfirmPhone(e.target.value)}
                               />
                           </div>
                       </div>
                       <div className="space-y-1">
-                          <label className="text-[10px] font-bold text-[#f4d300] uppercase tracking-widest">Email Address</label>
+                          <label className="text-[10px] font-bold text-[#f4d300] uppercase tracking-widest">Email Address (Optional)</label>
                           <div className="relative">
                               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" size={16}/>
                               <input 
                                   className="w-full pl-10 p-3 bg-black/50 border border-white/20 rounded-xl text-white outline-none focus:border-[#f4d300]"
+                                  placeholder="john@example.com"
                                   value={confirmEmail}
                                   onChange={e => setConfirmEmail(e.target.value)}
+                              />
+                          </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-1">
+                              <label className="text-[10px] font-bold text-[#f4d300] uppercase tracking-widest">Date</label>
+                              <input 
+                                  type="date"
+                                  className="w-full p-3 bg-black/50 border border-white/20 rounded-xl text-white outline-none focus:border-[#f4d300] text-xs"
+                                  value={requestedDate}
+                                  onChange={e => setRequestedDate(e.target.value)}
+                                  min={new Date().toISOString().split('T')[0]}
+                              />
+                          </div>
+                          <div className="space-y-1">
+                              <label className="text-[10px] font-bold text-[#f4d300] uppercase tracking-widest">Time</label>
+                              <input 
+                                  type="time"
+                                  className="w-full p-3 bg-black/50 border border-white/20 rounded-xl text-white outline-none focus:border-[#f4d300] text-xs"
+                                  value={deliveryTime}
+                                  onChange={e => setDeliveryTime(e.target.value)}
                               />
                           </div>
                       </div>
                   </div>
 
                   <button 
-                      onClick={() => processOrder(true)}
+                      onClick={processOrder}
                       className="w-full bg-[#f4d300] text-black py-4 rounded-2xl font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:scale-105 transition-transform"
                   >
-                      Confirm & Place Order
+                      <MessageCircle size={18} />
+                      Send Order to WhatsApp
                   </button>
               </div>
           </div>

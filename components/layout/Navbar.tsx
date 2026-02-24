@@ -10,11 +10,7 @@ const MENU_ITEMS_MAP: Record<string, { path: string; icon: React.ElementType; la
     home: { path: '/', icon: Home, label: 'Home' },
     shop: { path: '/shop', icon: ShoppingBag, label: 'Shop' },
     quote: { path: '/request-quote', icon: FileText, label: 'Request Quote' },
-    orders: { path: '/orders', icon: ClipboardList, label: 'My Orders' },
-    messages: { path: '/messages', icon: MessageSquare, label: 'Messages' },
-    account: { path: '/account', icon: User, label: 'My Account' },
     cart: { path: '/cart', icon: ShoppingCart, label: 'Basket', badge: true },
-    wishlist: { path: '/shop?category=Favorites', icon: Heart, label: 'My Wishlist' },
     tutorial: { path: '/tutorial', icon: HelpCircle, label: 'Help & Guide' }
 };
 
@@ -107,7 +103,7 @@ const Navbar: React.FC = () => {
   }, [lastScrollY, location.pathname, isAdminRoute]);
 
   const itemCount = cart.reduce((acc, item) => acc + item.quantity, 0);
-  const activeMenuOrder = config.menuOrder || ['admin', 'home', 'shop', 'quote', 'orders', 'messages', 'account', 'cart', 'wishlist'];
+  const activeMenuOrder = config.menuOrder?.filter(key => MENU_ITEMS_MAP[key]) || ['admin', 'home', 'shop', 'quote', 'cart', 'tutorial'];
 
   // Ensure 'quote' and 'tutorial' are in the menu order if missing (migration)
   if (!activeMenuOrder.includes('quote')) {
@@ -248,17 +244,6 @@ const Navbar: React.FC = () => {
           </a>
 
           <button 
-            onClick={() => navigate(currentUser ? '/account' : '/login')}
-            className={`w-9 h-9 rounded-full flex items-center justify-center hover:scale-110 transition-transform shadow-lg ${
-                currentUser 
-                ? 'bg-white text-black shadow-white/20' 
-                : 'bg-[#f4d300] text-black shadow-[#f4d300]/20'
-            }`}
-          >
-            <User size={18} strokeWidth={2.5} />
-          </button>
-
-          <button 
             onClick={() => setIsMenuOpen(true)} 
             className="p-3 text-white/50 hover:text-[#f4d300] transition-colors rounded-full hover:bg-white/5"
           >
@@ -280,49 +265,18 @@ const Navbar: React.FC = () => {
           
           <nav className="flex-1 flex flex-col justify-between overflow-y-auto no-scrollbar">
             <div className="space-y-3">
-              {currentUser ? (
-                <>
-                  {activeMenuOrder.map((key, index) => (
-                      <MenuLinkItem 
-                        key={key} 
-                        itemKey={key} 
-                        index={index} 
-                        total={activeMenuOrder.length} 
-                        currentUser={currentUser}
-                        cartItemCount={itemCount}
-                        onClose={() => setIsMenuOpen(false)}
-                        onMoveItem={moveItem}
-                      />
-                  ))}
-                </>
-              ) : (
-                <>
-                  <MenuLinkItem itemKey="home" index={0} total={3} currentUser={null} cartItemCount={0} onClose={() => setIsMenuOpen(false)} onMoveItem={() => {}} />
-                  <MenuLinkItem itemKey="shop" index={1} total={3} currentUser={null} cartItemCount={0} onClose={() => setIsMenuOpen(false)} onMoveItem={() => {}} />
-                  <Link 
-                    to="/login"
-                    onClick={() => setIsMenuOpen(false)}
-                    className="flex items-center justify-between w-full text-left text-white/70 hover:text-white hover:bg-white/5 p-5 rounded-2xl transition-all duration-300 group"
-                  >
-                    <div className="flex items-center gap-5">
-                        <LogIn size={22} strokeWidth={1.5} className="text-[#f4d300]"/>
-                        <span className="font-bold text-xl tracking-wider uppercase">Sign In</span>
-                    </div>
-                    <ArrowRight size={20} className="text-white/20 group-hover:text-[#f4d300] transition-transform group-hover:translate-x-1" />
-                  </Link>
-                  <Link 
-                    to="/signup"
-                    onClick={() => setIsMenuOpen(false)}
-                    className="flex items-center justify-between w-full text-left text-white/70 hover:text-white hover:bg-white/5 p-5 rounded-2xl transition-all duration-300 group"
-                  >
-                    <div className="flex items-center gap-5">
-                        <UserPlus size={22} strokeWidth={1.5} className="text-[#f4d300]"/>
-                        <span className="font-bold text-xl tracking-wider uppercase">Create Account</span>
-                    </div>
-                    <ArrowRight size={20} className="text-white/20 group-hover:text-[#f4d300] transition-transform group-hover:translate-x-1" />
-                  </Link>
-                </>
-              )}
+              {activeMenuOrder.map((key, index) => (
+                  <MenuLinkItem 
+                    key={key} 
+                    itemKey={key} 
+                    index={index} 
+                    total={activeMenuOrder.length} 
+                    currentUser={currentUser}
+                    cartItemCount={itemCount}
+                    onClose={() => setIsMenuOpen(false)}
+                    onMoveItem={moveItem}
+                  />
+              ))}
             </div>
             {currentUser && (
               <button 

@@ -144,7 +144,7 @@ const Settings: React.FC = () => {
                   <input 
                       className="w-full p-3 bg-gray-50 text-gray-900 rounded-xl border border-gray-200 outline-none focus:ring-1 focus:ring-red-500 text-sm font-bold" 
                       value={formData.adminCredentials?.username || ''} 
-                      onChange={(e) => setFormData({ ...formData, adminCredentials: { ...formData.adminCredentials!, username: e.target.value } })} 
+                      onChange={(e) => setFormData({ ...formData, adminCredentials: { ...(formData.adminCredentials || { username: '' }), username: e.target.value } })} 
                       placeholder="e.g. MeatAdmin98" 
                   />
               </div>
@@ -154,7 +154,7 @@ const Settings: React.FC = () => {
                       type="password"
                       className="w-full p-3 bg-gray-50 text-gray-900 rounded-xl border border-gray-200 outline-none focus:ring-1 focus:ring-red-500 text-sm" 
                       value={formData.adminCredentials?.password || ''} 
-                      onChange={(e) => setFormData({ ...formData, adminCredentials: { ...formData.adminCredentials!, password: e.target.value } })} 
+                      onChange={(e) => setFormData({ ...formData, adminCredentials: { ...(formData.adminCredentials || { username: '' }), password: e.target.value } })} 
                       placeholder="••••••••" 
                   />
               </div>

@@ -39,11 +39,10 @@ interface AppState {
   updateUser: (user: User) => void;
   deleteUser: (userId: string) => void;
   updateUserPassword: (email: string, newPassword: string) => void;
-  toggleWishlist: (productId: string) => void;
   addToCart: (product: Product, quantity: number, weight?: number, selectedOptions?: string[], vacuumPacked?: boolean) => void;
   removeFromCart: (cartItemId: string) => void;
   clearCart: () => void;
-  placeOrder: (order: Order, pointsRedeemed: number, usedPromoCodeId?: string) => void;
+  placeOrder: (order: Order, usedPromoCodeId?: string) => void;
   updateOrder: (orderId: string, updates: Partial<Order>) => void;
   deleteOrder: (orderId: string) => void;
   updateProduct: (product: Product) => void;
@@ -229,7 +228,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         // Debounce sync slightly to avoid spamming on rapid changes
         const timeout = setTimeout(() => {
           syncToSheet();
-        }, 3000);
+        }, 1000);
         return () => clearTimeout(timeout);
       }
     };
@@ -435,19 +434,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     logActivity('EDIT', `Password changed for ${email}`);
   };
 
-  const toggleWishlist = (productId: string) => {
-      if (!currentUser) return;
-      const currentWishlist = currentUser.wishlist || [];
-      const isInWishlist = currentWishlist.includes(productId);
-      const newWishlist = isInWishlist ? currentWishlist.filter(id => id !== productId) : [...currentWishlist, productId];
-      updateUser({ ...currentUser, wishlist: newWishlist });
-  };
-
   const addToCart = (product: Product, quantity: number, weight?: number, selectedOptions?: string[], vacuumPacked?: boolean) => {
     setCart(prev => {
-      // If KG item or vacuum packed or options used, we usually want separate lines or careful merging.
-      // For simplicity, strict merging only if everything matches.
-      
       const existingItem = prev.find(item => 
           item.productId === product.id && 
           item.weight === weight &&
@@ -474,13 +462,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const removeFromCart = (cartItemId: string) => setCart(prev => prev.filter(item => item.id !== cartItemId));
   const clearCart = () => setCart([]);
 
-  const placeOrder = (order: Order, pointsRedeemed: number, usedPromoCodeId?: string) => {
-    setOrders(prev => [{ ...order, pointsEarned: Math.floor(order.total / 500) }, ...prev]);
+  const placeOrder = (order: Order, usedPromoCodeId?: string) => {
+    setOrders(prev => [order, ...prev]);
     if (usedPromoCodeId) {
-        setPromoCodes(prev => prev.map(code => code.id === usedPromoCodeId ? { ...code, usedBy: [...code.usedBy, order.customerId] } : code));
-    }
-    if (currentUser && order.customerId !== 'manual') {
-        updateUser({ ...currentUser, loyaltyPoints: Math.max(0, (currentUser.loyaltyPoints || 0) - pointsRedeemed + Math.floor(order.total / 500)) });
+        setPromoCodes(prev => prev.map(code => code.id === usedPromoCodeId ? { ...code, usedBy: [...code.usedBy, 'anonymous'] } : code));
     }
     clearCart();
     
@@ -536,7 +521,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const updateConfig = (newConfig: AppConfig) => {
     if (isPreviewMode) setPreviewDataState(prev => ({ ...prev, config: { ...newConfig } }));
-    else setConfig({ ...newConfig });
+    else {
+        setConfig({ ...newConfig });
+        // Explicit sync on config change to ensure it goes live immediately
+        syncToSheet({ config: newConfig });
+    }
     logActivity('EDIT', 'System configuration updated');
   };
 
@@ -633,7 +622,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       isPreviewMode, isCloudSyncing, hasLoadedFromCloud, previewData,
       login, logout, addToCart, removeFromCart, clearCart, placeOrder, updateOrder, deleteOrder,
       updateProduct, deleteProduct, addProduct, updateConfig, addNotification, deleteNotification,
-      updateUser, deleteUser, updateUserPassword, toggleWishlist, addPost, updatePost, deletePost, 
+      updateUser, deleteUser, updateUserPassword, addPost, updatePost, deletePost, 
       addPromoCode, deletePromoCode, addReview, deleteReview, replyToReview, 
       togglePreviewMode, setPreviewData, commitPreview, cancelPreview, restoreData, syncToSheet, reorderProducts,
       logActivity, addRawMaterial, updateRawMaterial, deleteRawMaterial, addProductionBatch, trackProductView

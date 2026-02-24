@@ -10,13 +10,13 @@ export const INITIAL_POSTS: Post[] = [];
 export const INITIAL_USERS: User[] = [
     {
         id: 'admin',
-        username: 'admin',
+        username: 'MeatAdmin98',
         name: 'Administrator',
-        email: 'admin@example.com',
+        email: 'admin@meatdepot.co.za',
         phone: '',
         role: UserRole.ADMIN,
         loyaltyPoints: 0,
-        password: 'admin',
+        password: 'Mango070919-',
         permissions: ['orders', 'products', 'content']
     }
 ];
@@ -28,8 +28,8 @@ export const INITIAL_PROMO_CODES: PromoCode[] = [];
 export const CUSTOMER_DATABASE_SHEET = ''; 
 
 export const ADMIN_CREDENTIALS = {
-    username: 'admin',
-    password: 'admin'
+    username: 'MeatAdmin98',
+    password: 'Mango070919-'
 };
 
 export const DEFAULT_ADMIN_IMAGE = 'https://ui-avatars.com/api/?name=Admin&background=f4d300&color=000';
@@ -63,7 +63,7 @@ export const INITIAL_CONFIG: AppConfig = {
   postOrder: ['post1', 'post2'],
   featuredProductOrder: ['1', '5', '2', '3'],
   homeSectionOrder: ['hero', 'categories', 'featured', 'news'],
-  menuOrder: ['admin', 'home', 'shop', 'quote', 'orders', 'messages', 'account', 'cart', 'wishlist', 'tutorial'],
+  menuOrder: ['admin', 'home', 'shop', 'quote', 'cart', 'tutorial'],
   deliveryAreas: ['Gqeberha', 'Westering', 'Walmer', 'Summerstrand', 'Humewood', 'Lorraine', 'Newton Park', 'Mount Pleasant', 'Cotswold', 'Sunridge Park'],
   lastLeaderboardCheck: new Date().toISOString(),
   enableManualLeaderboard: false,
@@ -111,6 +111,10 @@ export const INITIAL_CONFIG: AppConfig = {
       messagingSenderId: "",
       appId: "",
       measurementId: ""
+  },
+  adminCredentials: {
+    username: 'MeatAdmin98',
+    password: 'Mango070919-'
   },
   backupMethod: 'FIREBASE',
   customDomain: {

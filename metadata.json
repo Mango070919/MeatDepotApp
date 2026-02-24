@@ -1,6 +1,6 @@
 {
   "name": "Meat Depot App",
-  "description": "A premium, mobile-first ordering app for Meat Depot butchery in Gqeberha, South Africa. Features include customer accounts, product catalog with premium 'Butcher's Picks', automated delivery fee calculation, and an AI-powered management dashboard.",
+  "description": "A premium, mobile-first ordering app for Meat Depot butchery in Gqeberha, South Africa. Features include direct WhatsApp ordering, automated delivery fee calculation, and an AI-powered management dashboard for real-time inventory and order tracking.",
   "requestFramePermissions": [
     "camera",
     "geolocation"

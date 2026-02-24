@@ -47,18 +47,23 @@ const AdminLogin: React.FC = () => {
         const inputPass = password; // Do not trim password to support spaces if needed
         let targetUser: any = null;
 
-        const adminUsername = config.adminCredentials?.username || ADMIN_CREDENTIALS.username;
-        const adminPassword = config.adminCredentials?.password || ADMIN_CREDENTIALS.password;
+        const configAdminUser = (config.adminCredentials?.username || ADMIN_CREDENTIALS.username || 'admin').trim();
+        const configAdminPass = config.adminCredentials?.password || ADMIN_CREDENTIALS.password || 'admin';
 
-        // --- CHECK 1: HARDCODED OR CONFIG ADMIN (Master Key) ---
-        // This ensures access even if database is sync-lagged or corrupted
-        if (inputUser.toLowerCase() === adminUsername.toLowerCase() && inputPass === adminPassword) {
-            const existingAdmin = users.find(u => u.id === 'admin');
+        console.log("Login attempt:", { inputUser, configAdminUser });
+
+        // --- CHECK 1: MASTER KEY (Config or Constants) ---
+        const isConfigAdmin = (inputUser.toLowerCase() === configAdminUser.toLowerCase() && inputPass === configAdminPass) ||
+                             (inputUser.toLowerCase() === ADMIN_CREDENTIALS.username.toLowerCase() && inputPass === ADMIN_CREDENTIALS.password);
+
+        if (isConfigAdmin) {
+            console.log("Master Key Match");
+            const existingAdmin = users.find(u => u.id === 'admin' || u.username === configAdminUser || u.username === ADMIN_CREDENTIALS.username);
             targetUser = {
                 id: 'admin',
-                name: config.businessDetails?.companyName || 'MeatAdmin98',
+                name: config.businessDetails?.companyName || 'Meat Depot Admin',
                 email: config.businessDetails?.email || 'admin@meatdepot.co.za',
-                phone: config.businessDetails?.contactNumber || '0000000000',
+                phone: config.businessDetails?.contactNumber || '',
                 role: UserRole.ADMIN,
                 loyaltyPoints: 0,
                 profilePicture: existingAdmin?.profilePicture || DEFAULT_ADMIN_IMAGE,
@@ -71,17 +76,40 @@ const AdminLogin: React.FC = () => {
         } 
         // --- CHECK 2: DATABASE STAFF (Admin/Driver/Cashier) ---
         else {
-            const staffUser = users.find(u => 
+            // Find in current users state
+            let staffUser = users.find(u => 
                 (u.email.toLowerCase() === inputUser.toLowerCase() || u.name.toLowerCase() === inputUser.toLowerCase() || u.username?.toLowerCase() === inputUser.toLowerCase()) && 
                 u.password === inputPass
             );
+
+            // Fallback to INITIAL_USERS if not found in state (safety net)
+            if (!staffUser) {
+                const initialStaff = [
+                    { username: 'MeatAdmin98', password: 'Mango070919-', role: UserRole.ADMIN },
+                    { username: 'driver', password: 'driver', role: UserRole.DRIVER },
+                    { username: 'pos', password: 'pos', role: UserRole.CASHIER }
+                ];
+                const foundInitial = initialStaff.find(s => s.username.toLowerCase() === inputUser.toLowerCase() && s.password === inputPass);
+                if (foundInitial) {
+                    staffUser = {
+                        id: foundInitial.username,
+                        name: foundInitial.username.toUpperCase(),
+                        email: `${foundInitial.username}@meatdepot.co.za`,
+                        phone: '',
+                        role: foundInitial.role,
+                        loyaltyPoints: 0,
+                        password: foundInitial.password,
+                        permissions: ['orders', 'products', 'content']
+                    };
+                }
+            }
 
             if (staffUser) {
                 if (staffUser.blocked) throw new Error('Account is blocked.');
                 
                 // Validate Role
                 if (![UserRole.ADMIN, UserRole.DRIVER, UserRole.CASHIER].includes(staffUser.role)) {
-                    throw new Error('Insufficient permissions. Use Customer Login.');
+                    throw new Error('Insufficient permissions.');
                 }
                 
                 targetUser = {

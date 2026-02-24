@@ -13,13 +13,6 @@ import { CheckCircle, XCircle } from 'lucide-react';
 import Home from './pages/customer/Home';
 import Shop from './pages/customer/Shop';
 import Cart from './pages/customer/Cart';
-import Orders from './pages/customer/Orders';
-import Messages from './pages/customer/Messages';
-import Login from './pages/customer/Login';
-import Signup from './pages/customer/Signup';
-import Account from './pages/customer/Account';
-import ForgotPassword from './pages/customer/ForgotPassword';
-import CompleteProfile from './pages/customer/CompleteProfile';
 import RequestQuote from './pages/customer/RequestQuote';
 
 // Common Pages
@@ -64,7 +57,7 @@ const PaymentSuccess: React.FC = () => {
             <CheckCircle size={80} className="text-green-500" />
             <h2 className="text-3xl font-bold text-white">Payment Successful!</h2>
             <p className="text-white/60">Your order has been processed. Thank you for shopping with Meat Depot.</p>
-            <button onClick={() => navigate('/orders')} className="bg-[#f4d300] text-black px-8 py-3 rounded-full font-bold uppercase text-sm">View Orders</button>
+            <button onClick={() => navigate('/')} className="bg-[#f4d300] text-black px-8 py-3 rounded-full font-bold uppercase text-sm">Return Home</button>
         </div>
     );
 };
@@ -83,14 +76,18 @@ const PaymentCancel: React.FC = () => {
 
 const PrivateRoute: React.FC<{ children: React.ReactNode; role?: UserRole }> = ({ children, role }) => {
   const { currentUser } = useApp();
-  if (!currentUser) return <Navigate to="/login" />;
+  
+  // If no role is specified, it's a general private route (usually for customers)
+  // But now we allow customers without login, so we only check for specific staff roles
+  if (!role) return <>{children}</>;
+
+  if (!currentUser) return <Navigate to="/admin-login" />;
   
   // Admin can access everything
   if (currentUser.role === UserRole.ADMIN) return <>{children}</>;
 
   // Strict role check
   if (role && currentUser.role !== role) {
-      // Redirect logic if role mismatch
       if (currentUser.role === UserRole.CASHIER) return <Navigate to="/pos" />;
       if (currentUser.role === UserRole.DRIVER) return <Navigate to="/driver" />;
       return <Navigate to="/" />;
@@ -193,26 +190,19 @@ const AppRoutes: React.FC = () => {
     <LayoutManager>
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/shop" element={<PrivateRoute><Shop /></PrivateRoute>} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/complete-profile" element={<CompleteProfile />} />
-          <Route path="/request-quote" element={<PrivateRoute><RequestQuote /></PrivateRoute>} />
+          <Route path="/shop" element={<Shop />} />
+          <Route path="/request-quote" element={<RequestQuote />} />
           
           {/* Common Routes */}
-          <Route path="/tutorial" element={<PrivateRoute><Tutorial /></PrivateRoute>} />
+          <Route path="/tutorial" element={<Tutorial />} />
           <Route path="/disclaimer" element={<Disclaimer />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<FairUsagePolicy />} />
           
-          <Route path="/cart" element={<PrivateRoute><Cart /></PrivateRoute>} />
-          <Route path="/orders" element={<PrivateRoute><Orders /></PrivateRoute>} />
-          <Route path="/messages" element={<PrivateRoute><Messages /></PrivateRoute>} />
-          <Route path="/account" element={<PrivateRoute><Account /></PrivateRoute>} />
+          <Route path="/cart" element={<Cart />} />
           
-          <Route path="/payment/success" element={<PrivateRoute><PaymentSuccess /></PrivateRoute>} />
-          <Route path="/payment/cancel" element={<PrivateRoute><PaymentCancel /></PrivateRoute>} />
+          <Route path="/payment/success" element={<PaymentSuccess />} />
+          <Route path="/payment/cancel" element={<PaymentCancel />} />
 
           <Route path="/admin-login" element={<AdminLogin />} />
           <Route path="/admin" element={<PrivateRoute role={UserRole.ADMIN}><AdminDashboard /></PrivateRoute>} />

@@ -51,9 +51,10 @@ const OrderManager: React.FC = () => {
     if (!order) return;
 
     const customer = users.find(u => u.id === order.customerId);
+    const phoneToUse = customer?.phone || order.contactPhone;
     
-    if (customer && customer.phone) {
-        let phone = customer.phone.replace(/\s+/g, '').replace(/-/g, '');
+    if (phoneToUse) {
+        let phone = phoneToUse.replace(/\s+/g, '').replace(/-/g, '');
         if (phone.startsWith('0')) {
             phone = '27' + phone.substring(1);
         }
@@ -133,12 +134,14 @@ const OrderManager: React.FC = () => {
   
   const handleNotifyCheckApp = (order: Order) => {
       const customer = users.find(u => u.id === order.customerId);
-      if (!customer || !customer.phone) {
+      const phoneToUse = customer?.phone || order.contactPhone;
+
+      if (!phoneToUse) {
           alert("No contact info for this user.");
           return;
       }
       
-      let phone = customer.phone.replace(/\s+/g, '').replace(/-/g, '');
+      let phone = phoneToUse.replace(/\s+/g, '').replace(/-/g, '');
       if (phone.startsWith('0')) phone = '27' + phone.substring(1);
       
       // Use the specific status message instead of the generic update message
@@ -222,10 +225,12 @@ const OrderManager: React.FC = () => {
                   </div>
                   <h3 className="font-bold text-gray-900 text-lg flex items-center gap-2">
                       {order.customerName}
-                      {customer && (
+                      {customer ? (
                         <span title="Registered App User">
                           <UserIcon size={14} className="text-blue-500" />
                         </span>
+                      ) : (
+                        <span title="Guest User" className="text-[10px] text-gray-400 font-normal bg-gray-100 px-2 py-0.5 rounded-full">GUEST</span>
                       )}
                   </h3>
                   <p className="text-xs text-gray-500">{new Date(order.createdAt).toLocaleString()}</p>

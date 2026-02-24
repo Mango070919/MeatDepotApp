@@ -59,6 +59,35 @@ const CustomerManager: React.FC = () => {
 
   const navigate = useNavigate();
 
+  const [activeView, setActiveView] = useState<'USERS' | 'GUESTS'>('USERS');
+
+  const guestBuyers = React.useMemo(() => {
+    const guests: Record<string, { name: string, phone: string, email: string, orderCount: number, totalSpend: number, lastOrder: string }> = {};
+    
+    orders.forEach(order => {
+        if (order.customerId === 'anonymous' || !users.find(u => u.id === order.customerId)) {
+            const key = order.contactPhone || order.customerName;
+            if (!guests[key]) {
+                guests[key] = {
+                    name: order.customerName,
+                    phone: order.contactPhone || '',
+                    email: order.contactEmail || '',
+                    orderCount: 0,
+                    totalSpend: 0,
+                    lastOrder: order.createdAt
+                };
+            }
+            guests[key].orderCount += 1;
+            guests[key].totalSpend += order.total;
+            if (new Date(order.createdAt) > new Date(guests[key].lastOrder)) {
+                guests[key].lastOrder = order.createdAt;
+            }
+        }
+    });
+    
+    return Object.values(guests).sort((a, b) => b.totalSpend - a.totalSpend);
+  }, [orders, users]);
+
   const filtered = users.filter(u => {
     const matchesSearch = u.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                           u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -285,98 +314,170 @@ const CustomerManager: React.FC = () => {
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
             <input 
               type="text" 
-              placeholder="Search by name, username or email..."
+              placeholder={activeView === 'USERS' ? "Search by name, username or email..." : "Search guest buyers..."}
               className="w-full pl-12 pr-4 py-4 bg-white border text-gray-900 border-gray-100 rounded-2xl shadow-sm outline-none focus:ring-2 focus:ring-[#f4d300]"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
           <div className="flex bg-white p-1 rounded-2xl border border-gray-100 shadow-sm overflow-x-auto no-scrollbar">
-              {['ALL', UserRole.CUSTOMER, UserRole.DRIVER, UserRole.ADMIN].map((role) => (
-                  <button
-                    key={role}
-                    onClick={() => setFilterRole(role as any)}
-                    className={`px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all whitespace-nowrap ${filterRole === role ? 'bg-[#f4d300] text-black shadow-sm' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'}`}
-                  >
-                      {role === 'ALL' ? 'All Users' : role + 's'}
-                  </button>
-              ))}
+              <button
+                onClick={() => setActiveView('USERS')}
+                className={`px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all whitespace-nowrap ${activeView === 'USERS' ? 'bg-black text-[#f4d300] shadow-sm' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'}`}
+              >
+                  Staff & Registered
+              </button>
+              <button
+                onClick={() => setActiveView('GUESTS')}
+                className={`px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all whitespace-nowrap ${activeView === 'GUESTS' ? 'bg-black text-[#f4d300] shadow-sm' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'}`}
+              >
+                  Guest Buyers
+              </button>
           </div>
+          {activeView === 'USERS' && (
+            <div className="flex bg-white p-1 rounded-2xl border border-gray-100 shadow-sm overflow-x-auto no-scrollbar">
+                {['ALL', UserRole.CUSTOMER, UserRole.DRIVER, UserRole.ADMIN].map((role) => (
+                    <button
+                        key={role}
+                        onClick={() => setFilterRole(role as any)}
+                        className={`px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all whitespace-nowrap ${filterRole === role ? 'bg-[#f4d300] text-black shadow-sm' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'}`}
+                    >
+                        {role === 'ALL' ? 'All' : role}
+                    </button>
+                ))}
+            </div>
+          )}
       </div>
 
       <div className="bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-sm mx-2">
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50 text-[10px] text-gray-400 uppercase tracking-widest font-bold">
-              <tr>
-                <th className="px-6 py-4 text-left">User</th>
-                <th className="px-6 py-4 text-left">Contact Info</th>
-                <th className="px-6 py-4 text-left">Role & Status</th>
-                <th className="px-6 py-4 text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y text-sm">
-              {filtered.map(u => (
-                <tr key={u.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center text-gray-400 overflow-hidden border border-gray-200 shrink-0">
-                        {u.profilePicture ? <img src={u.profilePicture} alt={u.name} className="w-full h-full object-cover" /> : <UserIcon size={20} />}
+          {activeView === 'USERS' ? (
+            <table className="w-full">
+              <thead className="bg-gray-50 text-[10px] text-gray-400 uppercase tracking-widest font-bold">
+                <tr>
+                  <th className="px-6 py-4 text-left">User</th>
+                  <th className="px-6 py-4 text-left">Contact Info</th>
+                  <th className="px-6 py-4 text-left">Role & Status</th>
+                  <th className="px-6 py-4 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y text-sm">
+                {filtered.map(u => (
+                  <tr key={u.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center text-gray-400 overflow-hidden border border-gray-200 shrink-0">
+                          {u.profilePicture ? <img src={u.profilePicture} alt={u.name} className="w-full h-full object-cover" /> : <UserIcon size={20} />}
+                        </div>
+                        <div>
+                          <button onClick={() => { setSelectedUser(u); setIsCreating(false); }} className="font-bold text-gray-900 hover:underline hover:text-[#f4d300] text-left block">{u.name}</button>
+                          <p className="text-[10px] text-gray-400 flex items-center gap-1">
+                              <AtSign size={10}/> {u.username || 'No Username'}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <button onClick={() => { setSelectedUser(u); setIsCreating(false); }} className="font-bold text-gray-900 hover:underline hover:text-[#f4d300] text-left block">{u.name}</button>
-                        <p className="text-[10px] text-gray-400 flex items-center gap-1">
-                            <AtSign size={10}/> {u.username || 'No Username'}
-                        </p>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="space-y-1">
+                        <p className="flex items-center gap-2 text-xs text-gray-500 font-medium"><Mail size={12}/> {u.email}</p>
+                        <p className="flex items-center gap-2 text-xs text-gray-500 font-medium"><Phone size={12}/> {u.phone}</p>
                       </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="space-y-1">
-                      <p className="flex items-center gap-2 text-xs text-gray-500 font-medium"><Mail size={12}/> {u.email}</p>
-                      <p className="flex items-center gap-2 text-xs text-gray-500 font-medium"><Phone size={12}/> {u.phone}</p>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex gap-2">
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-gray-100 text-gray-600 border border-gray-200">{u.role}</span>
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${u.blocked ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-green-50 text-green-600 border border-green-100'}`}>
-                        {u.blocked ? 'Blocked' : 'Active'}
-                        </span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-2">
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex gap-2">
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-gray-100 text-gray-600 border border-gray-200">{u.role}</span>
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${u.blocked ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-green-50 text-green-600 border border-green-100'}`}>
+                          {u.blocked ? 'Blocked' : 'Active'}
+                          </span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                          <button 
+                              onClick={() => handleNotifyCheckApp(u)} 
+                              className="text-yellow-600 hover:text-yellow-800 p-2 hover:bg-yellow-100 rounded-full transition-all"
+                              title="Send 'Check App' notification"
+                          >
+                              <Bell size={18} />
+                          </button>
+                          <button 
+                              onClick={() => handleChat(u)} 
+                              className="text-green-600 hover:text-green-800 p-2 hover:bg-green-100 rounded-full transition-all"
+                              title="Chat via WhatsApp"
+                          >
+                              <MessageCircle size={18} />
+                          </button>
+                          <button onClick={() => { setSelectedUser(u); setIsCreating(false); }} className="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded-full transition-all">
+                              <Eye size={18} />
+                          </button>
+                          <button 
+                              onClick={(e) => { e.stopPropagation(); performDelete(u); }} 
+                              className="text-red-400 hover:text-red-600 p-2 hover:bg-red-50 rounded-full transition-all"
+                              title="Delete User"
+                          >
+                              <Trash2 size={18} />
+                          </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <table className="w-full">
+              <thead className="bg-gray-50 text-[10px] text-gray-400 uppercase tracking-widest font-bold">
+                <tr>
+                  <th className="px-6 py-4 text-left">Guest Buyer</th>
+                  <th className="px-6 py-4 text-left">Contact</th>
+                  <th className="px-6 py-4 text-center">Orders</th>
+                  <th className="px-6 py-4 text-right">Total Spend</th>
+                  <th className="px-6 py-4 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y text-sm">
+                {guestBuyers.filter(g => g.name.toLowerCase().includes(searchTerm.toLowerCase()) || g.phone.includes(searchTerm)).map((g, i) => (
+                  <tr key={i} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center text-gray-400 font-bold">
+                          {g.name.charAt(0)}
+                        </div>
+                        <div>
+                          <p className="font-bold text-gray-900">{g.name}</p>
+                          <p className="text-[10px] text-gray-400">Last: {new Date(g.lastOrder).toLocaleDateString()}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="space-y-1">
+                        {g.email && <p className="flex items-center gap-2 text-xs text-gray-500 font-medium"><Mail size={12}/> {g.email}</p>}
+                        <p className="flex items-center gap-2 text-xs text-gray-500 font-medium"><Phone size={12}/> {g.phone}</p>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-center font-bold text-gray-700">
+                      {g.orderCount}
+                    </td>
+                    <td className="px-6 py-4 text-right font-bold text-yellow-700">
+                      R{g.totalSpend.toFixed(2)}
+                    </td>
+                    <td className="px-6 py-4 text-right">
                         <button 
-                            onClick={() => handleNotifyCheckApp(u)} 
-                            className="text-yellow-600 hover:text-yellow-800 p-2 hover:bg-yellow-100 rounded-full transition-all"
-                            title="Send 'Check App' notification"
-                        >
-                            <Bell size={18} />
-                        </button>
-                        <button 
-                            onClick={() => handleChat(u)} 
+                            onClick={() => {
+                                let phone = g.phone.replace(/\s+/g, '').replace(/-/g, '');
+                                if (phone.startsWith('0')) phone = '27' + phone.substring(1);
+                                window.open(`https://wa.me/${phone}`, '_blank');
+                            }} 
                             className="text-green-600 hover:text-green-800 p-2 hover:bg-green-100 rounded-full transition-all"
                             title="Chat via WhatsApp"
                         >
                             <MessageCircle size={18} />
                         </button>
-                        <button onClick={() => { setSelectedUser(u); setIsCreating(false); }} className="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded-full transition-all">
-                            <Eye size={18} />
-                        </button>
-                        <button 
-                            onClick={(e) => { e.stopPropagation(); performDelete(u); }} 
-                            className="text-red-400 hover:text-red-600 p-2 hover:bg-red-50 rounded-full transition-all"
-                            title="Delete User"
-                        >
-                            <Trash2 size={18} />
-                        </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
 
