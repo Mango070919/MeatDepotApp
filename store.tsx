@@ -217,7 +217,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       if (config.firebaseConfig?.apiKey) {
           initFirebase(config);
       }
-  }, [config.firebaseConfig]);
+  }, [config.firebaseConfig?.apiKey, config.firebaseConfig?.projectId]);
 
   // Auto-sync on critical changes
   useEffect(() => {
@@ -264,11 +264,19 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   useEffect(() => {
     const initCloudLoad = async () => {
       if (hasLoadedFromCloud) return;
+      
+      const hasFirebase = !!config.firebaseConfig?.apiKey;
+      const hasDomain = !!config.customDomain?.url && !!config.customDomain?.apiKey;
+      const hasDrive = !!config.googleDrive?.accessToken && !!config.googleDrive?.folderId;
+
+      if (!hasFirebase && !hasDomain && !hasDrive) return;
+
       setIsCloudSyncing(true);
       
       // 1. Try Firebase First if configured
-      if (config.firebaseConfig?.apiKey) {
+      if (hasFirebase) {
           try {
+              initFirebase(config);
               const firebaseData = await loadStateFromFirebase();
               if (firebaseData) {
                   restoreData(firebaseData);
@@ -276,11 +284,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                   setIsCloudSyncing(false);
                   return;
               }
-          } catch(e) { console.warn("Firebase load failed/skipped"); }
+          } catch(e) { console.warn("Firebase load failed/skipped", e); }
       }
 
       // 2. Try Loading from Domain
-      if (config.customDomain.url) {
+      if (hasDomain) {
           try {
               const domainData = await loadFromDomain(config);
               if (domainData) {
@@ -289,12 +297,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                   setIsCloudSyncing(false);
                   return;
               }
-          } catch(e) { console.warn("Domain load skipped"); }
+          } catch(e) { console.warn("Domain load skipped", e); }
       }
 
       // 3. Try Drive if Domain failed or not configured
-      const driveSet = config.googleDrive?.accessToken && config.googleDrive?.folderId;
-      if (driveSet) {
+      if (hasDrive) {
         try {
           const cloudData = await loadAppStateFromDrive(config);
           if (cloudData) {
@@ -322,17 +329,18 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       setIsCloudSyncing(false);
     };
     initCloudLoad();
-  }, []);
+  }, [config.firebaseConfig?.apiKey, config.googleDrive?.accessToken, config.customDomain?.url, config.customDomain?.apiKey]);
 
   const syncToSheet = async (overrides?: any) => {
       setIsCloudSyncing(true);
+      const effectiveConfig = overrides?.config || config;
       const dataToSave = { 
           products: overrides?.products || products, 
           users: overrides?.users || users, 
           orders: overrides?.orders || orders, 
           posts: overrides?.posts || posts, 
           promoCodes: overrides?.promoCodes || promoCodes, 
-          config: overrides?.config || config, 
+          config: effectiveConfig, 
           activityLogs: overrides?.activityLogs || activityLogs, 
           rawMaterials: overrides?.rawMaterials || rawMaterials, 
           productionBatches: overrides?.productionBatches || productionBatches, 
@@ -340,41 +348,45 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       };
       
       try {
+          const syncPromises = [];
+
           // 1. SYNC TO FIREBASE
-          if (config.firebaseConfig?.apiKey) {
-              await saveStateToFirebase(dataToSave);
+          if (effectiveConfig.firebaseConfig?.apiKey) {
+              initFirebase(effectiveConfig);
+              syncPromises.push(saveStateToFirebase(dataToSave));
           }
 
           // 2. SYNC TO CUSTOM DOMAIN (Self-Hosted)
-          if (config.customDomain?.url) {
-              await saveToDomain(dataToSave, config);
+          if (effectiveConfig.customDomain?.url && effectiveConfig.customDomain?.apiKey) {
+              syncPromises.push(saveToDomain(dataToSave, effectiveConfig));
           }
 
           // 3. SYNC TO GOOGLE DRIVE (Backup/CMS)
-          if (config.googleDrive?.accessToken && config.googleDrive?.folderId) {
+          if (effectiveConfig.googleDrive?.accessToken && effectiveConfig.googleDrive?.folderId) {
               // Also sync to Sheet if configured
-              const sheetTarget = config.googleSheetUrl || CUSTOMER_DATABASE_SHEET;
+              const sheetTarget = effectiveConfig.googleSheetUrl || CUSTOMER_DATABASE_SHEET;
               const sheetId = extractSheetId(sheetTarget);
               if (sheetId) {
-                  // Fire and forget sheet sync to not block UI too long
-                  saveStateToSheet(sheetId, dataToSave, config.googleDrive.accessToken).catch(console.error);
+                  // Sheet sync is important, we'll await it or at least track it
+                  syncPromises.push(saveStateToSheet(sheetId, dataToSave, effectiveConfig.googleDrive.accessToken));
               }
-              await saveAppStateToDrive(dataToSave, config);
+              syncPromises.push(saveAppStateToDrive(dataToSave, effectiveConfig));
           }
 
           // 4. PING LOCAL SERVER (For Vercel/Full-stack awareness)
           try {
-              await fetch('/api/sync', {
+              syncPromises.push(fetch('/api/sync', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ data: dataToSave })
-              });
-          } catch (e) {
-              console.warn("Server sync ping failed (expected in client-only environments)");
-          }
+              }).catch(() => {})); // Ignore server ping failures
+          } catch (e) {}
           
+          await Promise.all(syncPromises);
+          
+          setHasLoadedFromCloud(true);
           logActivity('SYNC', 'System state redeployed to cloud(s)');
-
+          return true;
       } catch (e: any) {
           if (e.message === 'token_expired') {
               setNotifications(prev => {

@@ -1,5 +1,5 @@
 
-import { initializeApp } from 'firebase/app';
+import { initializeApp, getApp, deleteApp } from 'firebase/app';
 import { getFirestore, doc, setDoc, getDoc, enableIndexedDbPersistence } from 'firebase/firestore';
 import { getStorage, ref, uploadString, getDownloadURL, deleteObject } from 'firebase/storage';
 import { AppConfig } from '../types';
@@ -14,10 +14,23 @@ export const initFirebase = (config: AppConfig) => {
       return false;
   }
   
-  if (!app) {
-      try {
-        app = initializeApp(config.firebaseConfig);
-        db = getFirestore(app);
+  try {
+    // Check if we need to re-initialize
+    if (app) {
+        // If config changed, delete existing app to re-initialize
+        if (app.options.apiKey !== config.firebaseConfig.apiKey || app.options.projectId !== config.firebaseConfig.projectId) {
+            console.log("Firebase config changed. Re-initializing...");
+            deleteApp(app).catch(console.error);
+            app = null;
+            db = null;
+            storage = null;
+        } else {
+            return true;
+        }
+    }
+
+    app = initializeApp(config.firebaseConfig);
+    db = getFirestore(app);
         
         // Enable Offline Persistence
         enableIndexedDbPersistence(db).catch((err) => {
@@ -35,8 +48,6 @@ export const initFirebase = (config: AppConfig) => {
         console.error("Firebase Initialization Error:", e);
         return false;
       }
-  }
-  return true;
 };
 
 export const saveStateToFirebase = async (data: any) => {
