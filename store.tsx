@@ -119,7 +119,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const [users, setUsers] = useState<User[]>(() => {
     const saved = localStorage.getItem('md_users');
-    return saved ? JSON.parse(saved) : INITIAL_USERS;
+    let loadedUsers = saved ? JSON.parse(saved) : INITIAL_USERS;
+    
+    // Force admin phone number
+    loadedUsers = loadedUsers.map((u: User) => {
+        if (u.id === 'admin') {
+            return { ...u, phone: '0632148131' };
+        }
+        return u;
+    });
+    return loadedUsers;
   });
   
   const [promoCodes, setPromoCodes] = useState<PromoCode[]>(() => {
@@ -221,18 +230,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   // Auto-sync on critical changes
   useEffect(() => {
-    const triggerSync = async () => {
-      // Only sync if we have a cloud method configured and we've already loaded initial data
-      const hasCloud = config.firebaseConfig?.apiKey || (config.googleDrive?.accessToken && config.googleDrive?.folderId) || config.customDomain?.url;
-      if (hasCloud && hasLoadedFromCloud && !isCloudSyncing) {
-        // Debounce sync slightly to avoid spamming on rapid changes
-        const timeout = setTimeout(() => {
-          syncToSheet();
-        }, 1000);
-        return () => clearTimeout(timeout);
-      }
-    };
-    triggerSync();
+    // Only sync if we have a cloud method configured and we've already loaded initial data
+    const hasCloud = config.firebaseConfig?.apiKey || (config.googleDrive?.accessToken && config.googleDrive?.folderId) || config.customDomain?.url;
+    
+    if (hasCloud && hasLoadedFromCloud && !isCloudSyncing) {
+      // Debounce sync slightly to avoid spamming on rapid changes
+      const timeout = setTimeout(() => {
+        syncToSheet();
+      }, 2000); // Increased to 2s to allow multiple state updates to settle
+      return () => clearTimeout(timeout);
+    }
   }, [products, orders, users, posts, promoCodes, config, rawMaterials, productionBatches]);
 
   useEffect(() => { saveData('md_products', products); }, [products]);
@@ -535,8 +542,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     if (isPreviewMode) setPreviewDataState(prev => ({ ...prev, config: { ...newConfig } }));
     else {
         setConfig({ ...newConfig });
-        // Explicit sync on config change to ensure it goes live immediately
-        syncToSheet({ config: newConfig });
+        // Removed explicit syncToSheet here as the useEffect will handle it
     }
     logActivity('EDIT', 'System configuration updated');
   };

@@ -258,7 +258,7 @@ const Cart: React.FC = () => {
 
     const message = `*NEW ORDER FROM MEAT DEPOT*%0A%0A${detailsLine}%0A%0A*Items:*%0A${itemLines}%0A%0A${deliveryLine}%0A${addressLine}%0A*${totalLine}*`;
     
-    const phone = config.businessDetails?.contactNumber?.replace(/[^0-9]/g, '') || '27632148131'; 
+    const phone = '27632148131'; 
     
     // Save to store
     placeOrder(newOrder, appliedCode?.id);

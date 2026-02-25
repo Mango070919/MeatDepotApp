@@ -55,7 +55,6 @@ const Settings: React.FC = () => {
     setIsSaving(true);
     try {
         updateConfig(formData);
-        await syncToSheet({ config: formData });
         setPreviewData({ config: undefined });
         alert('Settings saved!');
     } catch (e) {

@@ -127,8 +127,6 @@ const ProductManager: React.FC = () => {
       updateConfig(updatedConfig);
     }
     
-    // Immediate Cloud Sync with updated state
-    await syncToSheet({ products: updatedProducts, config: updatedConfig });
     handleClosePanel();
   };
 

@@ -106,16 +106,13 @@ const PostManager: React.FC = () => {
 
     if (isAddingNew) {
       const newPost = { ...form, id: Math.random().toString(36).substr(2, 9), timestamp: new Date().toISOString(), visible: form.visible ?? true } as Post;
-      updatedPosts = [newPost, ...posts];
       addPost(newPost);
       updatedConfig.postOrder = [newPost.id, ...config.postOrder];
       updateConfig(updatedConfig);
     } else {
-      updatedPosts = posts.map(p => p.id === form.id ? form as Post : p);
       updatePost(form as Post);
     }
     
-    await syncToSheet({ posts: updatedPosts, config: updatedConfig });
     handleClosePanel();
   };
 
@@ -127,25 +124,19 @@ const PostManager: React.FC = () => {
     if (newIndex < 0 || newIndex >= order.length) return;
     [order[index], order[newIndex]] = [order[newIndex], order[index]];
     updateConfig({ ...config, postOrder: order });
-    await syncToSheet({ config: { ...config, postOrder: order } });
   };
   
   const toggleVisibility = async (post: Post) => {
       const updatedPost = { ...post, visible: !post.visible };
-      const updatedPosts = posts.map(p => p.id === post.id ? updatedPost : p);
       updatePost(updatedPost);
-      await syncToSheet({ posts: updatedPosts });
   };
 
   const handleDelete = async (postId: string) => {
     if (window.confirm('Are you sure?')) {
-        const updatedPosts = posts.filter(p => p.id !== postId);
         const updatedOrder = config.postOrder.filter(id => id !== postId);
         
         deletePost(postId);
         updateConfig({ ...config, postOrder: updatedOrder });
-        
-        await syncToSheet({ posts: updatedPosts, config: { ...config, postOrder: updatedOrder } });
     }
   };
 

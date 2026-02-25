@@ -45,7 +45,6 @@ const OrderManager: React.FC = () => {
 
   const handleStatusUpdate = (id: string, status: OrderStatus) => {
     updateOrder(id, { status });
-    syncToSheet({ orders: orders.map(o => o.id === id ? { ...o, status } : o) });
 
     const order = orders.find(o => o.id === id);
     if (!order) return;
@@ -80,7 +79,6 @@ const OrderManager: React.FC = () => {
     };
     const updatedMessages = [...order.messages, newMessage];
     updateOrder(id, { messages: updatedMessages });
-    syncToSheet({ orders: orders.map(o => o.id === id ? { ...o, messages: updatedMessages } : o) });
     setMsg('');
   };
 
@@ -110,7 +108,6 @@ const OrderManager: React.FC = () => {
                       };
                       const updatedMessages = [...order.messages, newMessage];
                       updateOrder(orderId, { messages: updatedMessages });
-                      syncToSheet({ orders: orders.map(o => o.id === orderId ? { ...o, messages: updatedMessages } : o) });
                       alert("Document sent!");
                   }
               } else {
@@ -127,7 +124,6 @@ const OrderManager: React.FC = () => {
   const handleResolveQuote = (orderId: string) => {
       if(window.confirm("Mark this conversation as resolved and move to history?")) {
           updateOrder(orderId, { isResolved: true });
-          syncToSheet({ orders: orders.map(o => o.id === orderId ? { ...o, isResolved: true } : o) });
           setSelectedId(null);
       }
   };
@@ -153,7 +149,6 @@ const OrderManager: React.FC = () => {
   const saveTrackingLink = (id: string) => {
       if (!trackingLinkInput) return;
       updateOrder(id, { trackingUrl: trackingLinkInput });
-      syncToSheet({ orders: orders.map(o => o.id === id ? { ...o, trackingUrl: trackingLinkInput } : o) });
       setEditingTrackingId(null);
       setTrackingLinkInput('');
       alert("Live tracking link updated. Customer can now track delivery.");
@@ -166,7 +161,6 @@ const OrderManager: React.FC = () => {
   const handleDeleteOrder = (orderId: string) => {
       if (window.confirm("Are you sure you want to delete this order permanently?")) {
           deleteOrder(orderId);
-          syncToSheet({ orders: orders.filter(o => o.id !== orderId) });
       }
   };
 

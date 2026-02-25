@@ -13,7 +13,7 @@ export const INITIAL_USERS: User[] = [
         username: 'MeatAdmin98',
         name: 'Administrator',
         email: 'admin@meatdepot.co.za',
-        phone: '',
+        phone: '0632148131',
         role: UserRole.ADMIN,
         loyaltyPoints: 0,
         password: 'Mango070919-',
