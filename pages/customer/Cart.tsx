@@ -249,21 +249,21 @@ const Cart: React.FC = () => {
       }
       if (item.vacuumPacked) desc += ` (Vacuum Packed)`;
       return desc;
-    }).join('%0A');
+    }).join('\n');
 
     const totalLine = `Total: R${total.toFixed(2)}`;
     const deliveryLine = deliveryType === 'DELIVERY' ? `Delivery Fee: R${finalDeliveryFee.toFixed(2)}` : 'Collection';
     const addressLine = deliveryType === 'DELIVERY' ? `Address: ${address}` : '';
-    const detailsLine = `Order #: ${orderId}%0AName: ${confirmName}%0AEmail: ${confirmEmail || 'N/A'}%0APhone: ${confirmPhone || 'N/A'}%0ARequested ${deliveryType === 'DELIVERY' ? 'Delivery' : 'Collection'}: ${requestedDate} at ${deliveryTime}`;
+    const detailsLine = `Order #: ${orderId}\nName: ${confirmName}\nEmail: ${confirmEmail || 'N/A'}\nPhone: ${confirmPhone || 'N/A'}\nRequested ${deliveryType === 'DELIVERY' ? 'Delivery' : 'Collection'}: ${requestedDate} at ${deliveryTime}`;
 
-    const message = `*NEW ORDER FROM MEAT DEPOT*%0A%0A${detailsLine}%0A%0A*Items:*%0A${itemLines}%0A%0A${deliveryLine}%0A${addressLine}%0A*${totalLine}*`;
+    const message = `*NEW ORDER FROM MEAT DEPOT*\n\n${detailsLine}\n\n*Items:*\n${itemLines}\n\n${deliveryLine}\n${addressLine}\n*${totalLine}*`;
     
     const phone = '27632148131'; 
     
     // Save to store
     placeOrder(newOrder, appliedCode?.id);
     
-    window.open(`https://wa.me/${phone}?text=${message}`, '_blank');
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
     
     navigate('/');
   };

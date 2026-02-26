@@ -10,10 +10,12 @@ const CartBubble: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Don't show if empty, on cart page, or in admin area
+  // Don't show if empty, on cart page, or in admin/driver/pos areas
   if (cart.length === 0) return null;
   if (location.pathname === '/cart') return null;
   if (location.pathname.startsWith('/admin')) return null;
+  if (location.pathname.startsWith('/driver')) return null;
+  if (location.pathname.startsWith('/pos')) return null;
 
   // Calculate totals
   const itemCount = cart.reduce((acc, item) => acc + item.quantity, 0);

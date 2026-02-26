@@ -7,6 +7,7 @@ import Footer from './components/layout/Footer';
 import StartupNotice from './components/common/StartupNotice';
 import PreviewBanner from './components/common/PreviewBanner';
 import FacebookSDK from './components/common/FacebookSDK';
+import CartBubble from './components/common/CartBubble';
 import { CheckCircle, XCircle } from 'lucide-react';
 
 // Customer Pages
@@ -180,6 +181,7 @@ const LayoutManager: React.FC<{ children: React.ReactNode }> = ({ children }) =>
             <main className={`flex-grow w-full ${useContainer ? 'max-w-6xl mx-auto px-4 py-6' : 'w-full'}`}>
                 {children}
             </main>
+            <CartBubble />
             {showFooter && <Footer />}
         </div>
     );

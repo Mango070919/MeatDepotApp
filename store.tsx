@@ -177,7 +177,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const saved = localStorage.getItem('md_config');
     if (!saved) return INITIAL_CONFIG;
     const parsed = JSON.parse(saved);
-    return { ...INITIAL_CONFIG, ...parsed };
+    
+    // Ensure environment variables take precedence if local storage is empty
+    const mergedConfig = { ...INITIAL_CONFIG, ...parsed };
+    
+    if (!mergedConfig.firebaseConfig?.apiKey && INITIAL_CONFIG.firebaseConfig?.apiKey) {
+        mergedConfig.firebaseConfig = INITIAL_CONFIG.firebaseConfig;
+    }
+    
+    return mergedConfig;
   });
 
   const [isLoading, setIsLoading] = useState(false);

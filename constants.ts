@@ -1,4 +1,6 @@
 
+/// <reference types="vite/client" />
+
 import { Product, Post, User, Order, PromoCode, AppConfig, UserRole } from './types';
 
 export const CATEGORIES = ['Steaks', 'Biltong', 'Braai Packs', 'Specials', 'Chicken', 'Pork', 'Lamb', 'Sausage', 'Pantry'];
@@ -104,12 +106,12 @@ export const INITIAL_CONFIG: AppConfig = {
   },
   googleSheetUrl: '',
   firebaseConfig: {
-      apiKey: "",
-      authDomain: "",
-      projectId: "",
-      storageBucket: "",
-      messagingSenderId: "",
-      appId: "",
+      apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "",
+      authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "",
+      projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "",
+      storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "",
+      messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "",
+      appId: import.meta.env.VITE_FIREBASE_APP_ID || "",
       measurementId: ""
   },
   adminCredentials: {
