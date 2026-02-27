@@ -1,6 +1,6 @@
 
 import { initializeApp, getApp, deleteApp } from 'firebase/app';
-import { getFirestore, doc, setDoc, getDoc, enableIndexedDbPersistence } from 'firebase/firestore';
+import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, doc, setDoc, getDoc, onSnapshot } from 'firebase/firestore';
 import { getStorage, ref, uploadString, getDownloadURL, deleteObject } from 'firebase/storage';
 import { AppConfig } from '../types';
 
@@ -30,24 +30,21 @@ export const initFirebase = (config: AppConfig) => {
     }
 
     app = initializeApp(config.firebaseConfig);
-    db = getFirestore(app);
-        
-        // Enable Offline Persistence
-        enableIndexedDbPersistence(db).catch((err) => {
-            if (err.code == 'failed-precondition') {
-                console.warn("Firebase persistence failed: Multiple tabs open");
-            } else if (err.code == 'unimplemented') {
-                console.warn("Firebase persistence not supported by browser");
-            }
-        });
+    
+    // Initialize Firestore with persistent cache and multi-tab support
+    db = initializeFirestore(app, {
+        localCache: persistentLocalCache({
+            tabManager: persistentMultipleTabManager()
+        })
+    });
 
-        storage = getStorage(app);
-        console.log("Firebase Initialized Successfully");
-        return true;
-      } catch (e) {
-        console.error("Firebase Initialization Error:", e);
-        return false;
-      }
+    storage = getStorage(app);
+    console.log("Firebase Initialized Successfully");
+    return true;
+  } catch (e) {
+    console.error("Firebase Initialization Error:", e);
+    return false;
+  }
 };
 
 export const saveStateToFirebase = async (data: any) => {
@@ -116,6 +113,44 @@ export const saveStateToFirebase = async (data: any) => {
   }
 };
 
+export const subscribeToFirebaseState = (onUpdate: (data: any) => void) => {
+    if (!db) return () => {};
+
+    const collectionName = 'meat_depot_system';
+    const docIds = ['config', 'products', 'users', 'orders', 'posts', 'promoCodes', 'rawMaterials', 'productionBatches', 'activityLogs'];
+    
+    const unsubscribes = docIds.map(id => {
+        return onSnapshot(doc(db, collectionName, id), (snap) => {
+            if (snap.metadata.hasPendingWrites) {
+                // Ignore local writes
+                return;
+            }
+            if (snap.exists()) {
+                const data = snap.data();
+                const update: any = {};
+                
+                if (id === 'config') {
+                    update.config = data;
+                } else {
+                    if (data.items) {
+                        update[id] = data.items;
+                    }
+                }
+                
+                // Only trigger update if there's actual data
+                if (Object.keys(update).length > 0) {
+                    onUpdate(update);
+                }
+            }
+        }, (error) => {
+            console.error(`Firebase Subscribe Error for ${id}:`, error);
+        });
+    });
+
+    return () => {
+        unsubscribes.forEach(unsub => unsub());
+    };
+};
 export const loadStateFromFirebase = async () => {
     if (!db) return null;
 

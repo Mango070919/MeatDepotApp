@@ -31,7 +31,7 @@ import { uploadFile } from '../../services/storageService';
 import { playSound } from '../../services/soundService';
 
 const ManualSale: React.FC = () => {
-  const { products, users, placeOrder, config, addNotification, login, syncToSheet } = useApp();
+  const { products, users, placeOrder, config, addNotification, login, addUser, syncToSheet } = useApp();
   const navigate = useNavigate();
   
   const [transactionType, setTransactionType] = useState<'SALE' | 'QUOTE'>('SALE');
@@ -164,7 +164,7 @@ const ManualSale: React.FC = () => {
       };
 
       // Add to state and sync
-      login(newUser); // This adds to users list in store
+      addUser(newUser); // This adds to users list in store
       const updatedUsers = [...users, newUser];
       await syncToSheet({ users: updatedUsers });
 
@@ -193,7 +193,7 @@ const ManualSale: React.FC = () => {
           
           // 2. If Existing User, Upload and Send to Inbox
           if (customerType === 'EXISTING' && selectedUser && pdfDataUri) {
-              const hasCloud = config.backupMethod === 'CUSTOM_DOMAIN' || (config.googleDrive?.accessToken && config.googleDrive?.folderId);
+              const hasCloud = !!config.firebaseConfig?.apiKey;
               
               if (hasCloud) {
                   const fileName = `${type}_${order.id}_${Date.now()}.pdf`;

@@ -308,11 +308,6 @@ export interface AppConfig {
   // Packaging
   enableVacuumPack?: boolean;
 
-  googleDrive?: {
-    accessToken: string;
-    folderId: string;
-  };
-  googleSheetUrl?: string;
   firebaseConfig?: FirebaseConfig;
   geminiApiKey?: string;
   emailConfig?: {
@@ -322,11 +317,6 @@ export interface AppConfig {
   adminCredentials?: {
     username: string;
     password?: string;
-  };
-  backupMethod: 'GOOGLE_DRIVE' | 'CUSTOM_DOMAIN' | 'FIREBASE';
-  customDomain: {
-    url: string;
-    apiKey: string;
   };
   appUrl?: string; // Custom domain for the app link
   socialLinks?: {

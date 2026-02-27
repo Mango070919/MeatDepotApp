@@ -1,14 +1,14 @@
 
 import React, { useState } from 'react';
 import { useApp } from '../../store';
-import { Trash2, ShoppingBag, MapPin, Truck, MessageCircle, Store, ArrowLeft, Coins, Loader2, CheckCircle, Navigation, Ticket, CreditCard, X, Phone, Mail, User, Package, Search, Check } from 'lucide-react';
+import { Trash2, ShoppingBag, MapPin, Truck, MessageCircle, Store, ArrowLeft, Coins, Loader2, CheckCircle, Navigation, Ticket, CreditCard, X, Phone, Mail, User, Package, Search, Check, Plus, Minus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { OrderStatus, CartItem, UnitType, PromoCode, Order } from '../../types';
 import { validateAddress } from '../../services/geminiService';
 import { playSound } from '../../services/soundService';
 
 const Cart: React.FC = () => {
-  const { cart, removeFromCart, placeOrder, config, products, addToCart, promoCodes, clearCart } = useApp();
+  const { cart, removeFromCart, updateCartItemQuantity, placeOrder, config, products, addToCart, promoCodes, clearCart, currentUser } = useApp();
   const navigate = useNavigate();
   const [deliveryType, setDeliveryType] = useState<'DELIVERY' | 'COLLECTION'>('COLLECTION');
   const [address, setAddress] = useState('');
@@ -199,10 +199,20 @@ const Cart: React.FC = () => {
   };
 
   const handleInitialCheckout = () => {
+    if (!currentUser) {
+        navigate('/auth');
+        return;
+    }
+
     if (deliveryType === 'DELIVERY' && !address) {
         alert("Please provide a delivery address.");
         return;
     }
+
+    // Pre-fill user details
+    setConfirmName(currentUser.name || '');
+    setConfirmPhone(currentUser.phone || '');
+    setConfirmEmail(currentUser.email || '');
 
     setShowCheckoutForm(true);
   };
@@ -222,7 +232,7 @@ const Cart: React.FC = () => {
     
     const newOrder: Order = {
         id: orderId,
-        customerId: 'anonymous',
+        customerId: currentUser?.id || 'anonymous',
         customerName: confirmName,
         contactPhone: confirmPhone,
         contactEmail: confirmEmail,
@@ -256,7 +266,7 @@ const Cart: React.FC = () => {
     const addressLine = deliveryType === 'DELIVERY' ? `Address: ${address}` : '';
     const detailsLine = `Order #: ${orderId}\nName: ${confirmName}\nEmail: ${confirmEmail || 'N/A'}\nPhone: ${confirmPhone || 'N/A'}\nRequested ${deliveryType === 'DELIVERY' ? 'Delivery' : 'Collection'}: ${requestedDate} at ${deliveryTime}`;
 
-    const message = `*NEW ORDER FROM MEAT DEPOT*\n\n${detailsLine}\n\n*Items:*\n${itemLines}\n\n${deliveryLine}\n${addressLine}\n*${totalLine}*`;
+    const message = `*NEW ORDER FROM MEAT DEPOT*\n\n${detailsLine}\n\n*Items:*\n${itemLines}\n\n${deliveryLine}\n${addressLine}\n*${totalLine}*\n\n_Please note: For items sold by weight (e.g., steaks, biltong), the price is an estimation. The final weight and price may vary slightly._`;
     
     const phone = '27632148131'; 
     
@@ -272,14 +282,29 @@ const Cart: React.FC = () => {
     <div className="min-h-screen bg-black -mx-4 px-6 pt-6 pb-20 space-y-8 animate-in slide-in-from-bottom duration-500">
       
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <button onClick={() => navigate('/shop')} className="p-3 bg-white/5 rounded-full shadow-sm border border-white/10 text-white/60 hover:text-white transition-colors">
-          <ArrowLeft size={20} />
-        </button>
-        <div className="flex-1">
-            <h1 className="brand-font text-4xl font-bold italic text-white">Your Basket</h1>
-            <p className="text-[#f4d300] text-[9px] font-bold tracking-[0.4em] uppercase opacity-70">{cart.length} Premium Items</p>
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+            <button onClick={() => navigate('/shop')} className="p-3 bg-white/5 rounded-full shadow-sm border border-white/10 text-white/60 hover:text-white transition-colors">
+              <ArrowLeft size={20} />
+            </button>
+            <div>
+                <h1 className="brand-font text-4xl font-bold italic text-white">Your Basket</h1>
+                <p className="text-[#f4d300] text-[9px] font-bold tracking-[0.4em] uppercase opacity-70">{cart.length} Premium Items</p>
+            </div>
         </div>
+        {cart.length > 0 && (
+            <button 
+                onClick={() => {
+                    if (window.confirm('Are you sure you want to clear your cart?')) {
+                        clearCart();
+                    }
+                }} 
+                className="text-white/40 hover:text-red-500 transition-colors flex items-center gap-2 text-xs font-bold uppercase tracking-widest"
+            >
+                <Trash2 size={14} />
+                <span className="hidden sm:inline">Clear Cart</span>
+            </button>
+        )}
       </div>
 
       {cart.length === 0 ? (
@@ -304,23 +329,83 @@ const Cart: React.FC = () => {
                 {cart.map(item => {
                     const price = calculateItemPrice(item);
                     return (
-                        <div key={item.id} className="bg-[#121212] p-4 rounded-[25px] border border-white/5 flex items-center gap-4 group">
-                            <div className="w-20 h-20 bg-gray-800 rounded-2xl overflow-hidden shrink-0">
-                                <img src={item.product.image} className="w-full h-full object-cover" alt={item.product.name} />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <h3 className="font-bold text-white text-sm truncate">{item.product.name}</h3>
-                                <p className="text-[#f4d300] text-xs font-bold mt-1">R{price.toFixed(2)}</p>
-                                <div className="text-white/40 text-[10px] mt-1 space-y-0.5">
-                                    <p>{item.product.unit === UnitType.KG && item.weight ? `${item.weight}g` : 'Unit'} </p>
-                                    {item.selectedOptions && item.selectedOptions.length > 0 && <p>• {item.selectedOptions.join(', ')}</p>}
-                                    {item.vacuumPacked && <p className="text-blue-400 font-bold flex items-center gap-1"><Package size={10}/> Vacuum Packed</p>}
+                        <div key={item.id} className="bg-[#121212] p-4 rounded-[25px] border border-white/5 flex flex-col sm:flex-row items-start sm:items-center gap-4 group">
+                            <div className="flex items-center gap-4 w-full sm:w-auto flex-1">
+                                <div className="w-20 h-20 bg-gray-800 rounded-2xl overflow-hidden shrink-0">
+                                    <img src={item.product.image} className="w-full h-full object-cover" alt={item.product.name} />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <h3 className="font-main font-bold text-white text-sm truncate">{item.product.name}</h3>
+                                    <div className="flex items-baseline gap-2 mt-1">
+                                        <p className="text-[#f4d300] text-sm font-bold">R{price.toFixed(2)}</p>
+                                        {item.product.unit === UnitType.KG && (
+                                            <span className="text-white/40 text-[9px] font-bold uppercase tracking-widest">(Est.)</span>
+                                        )}
+                                    </div>
+                                    <div className="text-white/40 text-[10px] mt-1 space-y-0.5">
+                                        {item.product.unit === UnitType.KG && item.weight ? (
+                                            <p>{item.weight}g @ R{item.product.price}/kg</p>
+                                        ) : (
+                                            <p>Unit</p>
+                                        )}
+                                        {item.selectedOptions && item.selectedOptions.length > 0 && <p>• {item.selectedOptions.join(', ')}</p>}
+                                        {item.vacuumPacked && <p className="text-blue-400 font-bold flex items-center gap-1"><Package size={10}/> Vacuum Packed</p>}
+                                    </div>
                                 </div>
                             </div>
-                            <div className="flex flex-col items-end gap-2">
-                                <span className="bg-white/10 text-white px-3 py-1 rounded-lg text-xs font-bold">x{item.quantity}</span>
-                                <button onClick={() => removeFromCart(item.id)} className="p-2 text-white/20 hover:text-red-500 transition-colors">
-                                    <Trash2 size={16} />
+                            <div className="flex items-center justify-between w-full sm:w-auto gap-4 mt-2 sm:mt-0 pt-2 sm:pt-0 border-t border-white/5 sm:border-t-0">
+                                <div className="flex items-center bg-white/5 rounded-2xl p-1.5 border border-white/10">
+                                    <button 
+                                        onClick={() => {
+                                            if (item.quantity === 1) {
+                                                if (window.confirm('Remove this item from your cart?')) {
+                                                    updateCartItemQuantity(item.id, 0);
+                                                }
+                                            } else {
+                                                updateCartItemQuantity(item.id, item.quantity - 1);
+                                            }
+                                        }}
+                                        className="w-12 h-12 flex items-center justify-center text-white/60 hover:text-black hover:bg-[#f4d300] rounded-xl transition-colors"
+                                    >
+                                        <Minus size={20} strokeWidth={3} />
+                                    </button>
+                                    <input 
+                                        type="number"
+                                        min="1"
+                                        value={item.quantity}
+                                        onChange={(e) => {
+                                            const val = parseInt(e.target.value);
+                                            if (!isNaN(val) && val > 0) {
+                                                updateCartItemQuantity(item.id, val);
+                                            } else if (e.target.value === '') {
+                                                // Allow temporary empty state while typing
+                                            }
+                                        }}
+                                        onBlur={(e) => {
+                                            const val = parseInt(e.target.value);
+                                            if (isNaN(val) || val <= 0) {
+                                                updateCartItemQuantity(item.id, 1);
+                                            }
+                                        }}
+                                        className="w-12 text-center text-lg font-bold text-white bg-transparent outline-none [&::-webkit-inner-spin-button]:appearance-none"
+                                    />
+                                    <button 
+                                        onClick={() => updateCartItemQuantity(item.id, item.quantity + 1)}
+                                        className="w-12 h-12 flex items-center justify-center text-white/60 hover:text-black hover:bg-[#f4d300] rounded-xl transition-colors"
+                                    >
+                                        <Plus size={20} strokeWidth={3} />
+                                    </button>
+                                </div>
+                                <button 
+                                    onClick={() => {
+                                        if (window.confirm('Remove this item from your cart?')) {
+                                            removeFromCart(item.id);
+                                        }
+                                    }} 
+                                    className="p-4 text-white/20 hover:text-red-500 transition-colors bg-white/5 hover:bg-red-500/10 rounded-2xl"
+                                    title="Remove item"
+                                >
+                                    <Trash2 size={24} />
                                 </button>
                             </div>
                         </div>
@@ -334,57 +419,62 @@ const Cart: React.FC = () => {
                     <Truck size={16} className="text-[#f4d300]"/> Delivery Options
                 </h3>
                 
-                <div className="flex bg-black/50 p-1 rounded-2xl border border-white/10">
+                <div className="flex flex-col sm:flex-row gap-3">
                     <button 
                         onClick={() => setDeliveryType('COLLECTION')}
-                        className={`flex-1 py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${deliveryType === 'COLLECTION' ? 'bg-[#f4d300] text-black shadow-lg' : 'text-white/40 hover:text-white'}`}
+                        className={`flex-1 py-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all border-2 ${deliveryType === 'COLLECTION' ? 'bg-[#f4d300] border-[#f4d300] text-black shadow-lg transform -skew-x-6' : 'bg-black/50 border-white/10 text-white/40 hover:text-white hover:border-white/30'}`}
                     >
-                        Collection
+                        <span className={deliveryType === 'COLLECTION' ? 'transform skew-x-6 block' : ''}>Collection</span>
                     </button>
                     <button 
                         onClick={() => setDeliveryType('DELIVERY')}
-                        className={`flex-1 py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${deliveryType === 'DELIVERY' ? 'bg-[#f4d300] text-black shadow-lg' : 'text-white/40 hover:text-white'}`}
+                        className={`flex-1 py-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all border-2 ${deliveryType === 'DELIVERY' ? 'bg-[#f4d300] border-[#f4d300] text-black shadow-lg transform -skew-x-6' : 'bg-black/50 border-white/10 text-white/40 hover:text-white hover:border-white/30'}`}
                     >
-                        Delivery
+                        <span className={deliveryType === 'DELIVERY' ? 'transform skew-x-6 block' : ''}>Delivery</span>
                     </button>
                 </div>
 
                 {deliveryType === 'COLLECTION' ? (
-                    <div className="bg-white/5 p-4 rounded-2xl border border-white/10 text-center space-y-2">
-                        <Store size={24} className="mx-auto text-white/30" />
-                        <p className="text-white font-bold text-sm">Collection at Meat Depot</p>
-                        <p className="text-white/50 text-xs">{config.businessDetails?.addressLine1 || "63 Clarence Road, Westering"}</p>
+                    <div className="bg-white/5 p-6 rounded-2xl border border-white/10 text-center space-y-3">
+                        <Store size={32} className="mx-auto text-[#f4d300]" />
+                        <p className="text-white font-bold text-base">Collection at Meat Depot</p>
+                        <p className="text-white/50 text-sm">{config.businessDetails?.addressLine1 || "63 Clarence Road, Westering"}</p>
                     </div>
                 ) : (
                     <div className="space-y-4 animate-in fade-in">
                         <div className="space-y-2">
                             <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Delivery Address</label>
-                            <div className="flex gap-2">
+                            <div className="flex flex-col sm:flex-row gap-3">
                                 <div className="relative flex-1">
-                                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" size={16} />
+                                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" size={20} />
                                     <input 
-                                        className="w-full pl-10 pr-4 py-3 bg-black/50 border border-white/10 rounded-xl text-white text-sm outline-none focus:border-[#f4d300]"
+                                        className="w-full pl-12 pr-4 py-4 bg-black/50 border-2 border-white/10 rounded-2xl text-white text-base outline-none focus:border-[#f4d300] transition-colors"
                                         placeholder="Search address (Area, Street)"
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
                                         onKeyDown={(e) => e.key === 'Enter' && handleAddressSearch()}
                                     />
                                 </div>
-                                <button onClick={handleUseCurrentLocation} className="bg-white/10 text-white p-3 rounded-xl hover:bg-white/20 transition-colors">
-                                    <Navigation size={18} />
-                                </button>
-                                <button onClick={handleAddressSearch} className="bg-[#f4d300] text-black p-3 rounded-xl hover:bg-yellow-400 transition-colors" disabled={isSearchingAddress}>
-                                    {isSearchingAddress ? <Loader2 size={18} className="animate-spin" /> : <Search size={18} />}
-                                </button>
+                                <div className="flex gap-3">
+                                    <button onClick={handleUseCurrentLocation} className="flex-1 sm:flex-none bg-white/10 text-white p-4 rounded-2xl hover:bg-white/20 transition-colors flex items-center justify-center border-2 border-transparent hover:border-white/30">
+                                        <Navigation size={20} />
+                                    </button>
+                                    <button onClick={handleAddressSearch} className="flex-1 sm:flex-none bg-[#f4d300] text-black p-4 rounded-2xl hover:bg-yellow-400 transition-colors flex items-center justify-center border-2 border-[#f4d300]" disabled={isSearchingAddress}>
+                                        {isSearchingAddress ? <Loader2 size={20} className="animate-spin" /> : <Search size={20} />}
+                                    </button>
+                                </div>
                             </div>
-                            {addressError && <p className="text-red-500 text-xs font-bold">{addressError}</p>}
+                            {addressError && <p className="text-red-500 text-xs font-bold mt-2">{addressError}</p>}
                             {isAddressVerified && (
-                                <div className="bg-green-500/10 border border-green-500/20 p-3 rounded-xl flex items-start gap-3">
-                                    <CheckCircle size={16} className="text-green-500 shrink-0 mt-0.5" />
+                                <div className="bg-green-500/10 border-2 border-green-500/30 p-4 rounded-2xl flex items-start gap-4 mt-4">
+                                    <CheckCircle size={20} className="text-green-500 shrink-0 mt-0.5" />
                                     <div>
-                                        <p className="text-green-500 text-xs font-bold">Location Verified</p>
-                                        <p className="text-white/60 text-[10px]">{address}</p>
-                                        <p className="text-white/40 text-[10px] mt-1">Distance: {distanceKm.toFixed(1)}km | Fee: R{finalDeliveryFee.toFixed(2)}</p>
+                                        <p className="text-green-500 text-sm font-black uppercase tracking-widest">Location Verified</p>
+                                        <p className="text-white/80 text-sm mt-1">{address}</p>
+                                        <div className="flex gap-4 mt-2">
+                                            <p className="text-white/50 text-xs font-bold bg-black/50 px-2 py-1 rounded-md">Distance: {distanceKm.toFixed(1)}km</p>
+                                            <p className="text-[#f4d300] text-xs font-bold bg-black/50 px-2 py-1 rounded-md">Fee: R{finalDeliveryFee.toFixed(2)}</p>
+                                        </div>
                                     </div>
                                 </div>
                             )}
@@ -396,7 +486,7 @@ const Cart: React.FC = () => {
                     <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Preferred Date</label>
                     <input 
                         type="date" 
-                        className="w-full p-3 bg-black/50 border border-white/10 rounded-xl text-white text-sm outline-none focus:border-[#f4d300]"
+                        className="w-full p-4 bg-black/50 border-2 border-white/10 rounded-2xl text-white text-base outline-none focus:border-[#f4d300] transition-colors"
                         min={new Date().toISOString().split('T')[0]}
                         value={requestedDate}
                         onChange={(e) => setRequestedDate(e.target.value)}
@@ -408,20 +498,20 @@ const Cart: React.FC = () => {
             <div className="bg-[#121212] p-6 rounded-[32px] border border-white/5 space-y-6">
                 <div className="space-y-2">
                     <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Promo Code</label>
-                    <div className="flex gap-2">
+                    <div className="flex flex-col sm:flex-row gap-3">
                         <div className="relative flex-1">
-                            <Ticket className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" size={16} />
+                            <Ticket className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" size={20} />
                             <input 
-                                className="w-full pl-10 pr-4 py-3 bg-black/50 border border-white/10 rounded-xl text-white text-sm outline-none focus:border-[#f4d300] uppercase"
+                                className="w-full pl-12 pr-4 py-4 bg-black/50 border-2 border-white/10 rounded-2xl text-white text-base outline-none focus:border-[#f4d300] uppercase transition-colors"
                                 placeholder="Enter Code"
                                 value={promoInput}
                                 onChange={(e) => setPromoInput(e.target.value)}
                             />
                         </div>
-                        <button onClick={handleApplyPromo} className="bg-white/10 text-white px-4 rounded-xl text-xs font-bold uppercase hover:bg-white/20">Apply</button>
+                        <button onClick={handleApplyPromo} className="bg-white/10 text-white px-8 py-4 rounded-2xl text-sm font-black uppercase tracking-widest hover:bg-white/20 transition-colors border-2 border-transparent hover:border-white/30">Apply</button>
                     </div>
-                    {promoError && <p className="text-red-500 text-xs font-bold">{promoError}</p>}
-                    {appliedCode && <p className="text-green-500 text-xs font-bold flex items-center gap-1"><Check size={12}/> Code Applied: {appliedCode.code}</p>}
+                    {promoError && <p className="text-red-500 text-xs font-bold mt-2">{promoError}</p>}
+                    {appliedCode && <p className="text-green-500 text-sm font-bold flex items-center gap-2 mt-2"><Check size={16}/> Code Applied: {appliedCode.code}</p>}
                 </div>
             </div>
 
@@ -447,6 +537,9 @@ const Cart: React.FC = () => {
                     <span className="text-white font-bold text-lg">Total</span>
                     <span className="text-4xl font-bold text-white tracking-tighter">R{total.toFixed(2)}</span>
                 </div>
+                <p className="text-white/40 text-[10px] text-center mt-2 italic">
+                    * For items sold by weight (e.g., steaks, biltong), the price is an estimation. The final weight and price may vary slightly.
+                </p>
             </div>
 
             <button 
@@ -476,9 +569,9 @@ const Cart: React.FC = () => {
                       <div className="space-y-1">
                           <label className="text-[10px] font-bold text-[#f4d300] uppercase tracking-widest">Name & Surname</label>
                           <div className="relative">
-                              <User className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" size={16}/>
+                              <User className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" size={20}/>
                               <input 
-                                  className="w-full pl-10 p-3 bg-black/50 border border-white/20 rounded-xl text-white outline-none focus:border-[#f4d300]"
+                                  className="w-full pl-12 p-4 bg-black/50 border-2 border-white/10 rounded-2xl text-white outline-none focus:border-[#f4d300] transition-colors"
                                   placeholder="John Doe"
                                   value={confirmName}
                                   onChange={e => setConfirmName(e.target.value)}
@@ -488,9 +581,9 @@ const Cart: React.FC = () => {
                       <div className="space-y-1">
                           <label className="text-[10px] font-bold text-[#f4d300] uppercase tracking-widest">WhatsApp Number</label>
                           <div className="relative">
-                              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" size={16}/>
+                              <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" size={20}/>
                               <input 
-                                  className="w-full pl-10 p-3 bg-black/50 border border-white/20 rounded-xl text-white outline-none focus:border-[#f4d300]"
+                                  className="w-full pl-12 p-4 bg-black/50 border-2 border-white/10 rounded-2xl text-white outline-none focus:border-[#f4d300] transition-colors"
                                   placeholder="082 123 4567"
                                   value={confirmPhone}
                                   onChange={e => setConfirmPhone(e.target.value)}
@@ -500,9 +593,9 @@ const Cart: React.FC = () => {
                       <div className="space-y-1">
                           <label className="text-[10px] font-bold text-[#f4d300] uppercase tracking-widest">Email Address (Optional)</label>
                           <div className="relative">
-                              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" size={16}/>
+                              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" size={20}/>
                               <input 
-                                  className="w-full pl-10 p-3 bg-black/50 border border-white/20 rounded-xl text-white outline-none focus:border-[#f4d300]"
+                                  className="w-full pl-12 p-4 bg-black/50 border-2 border-white/10 rounded-2xl text-white outline-none focus:border-[#f4d300] transition-colors"
                                   placeholder="john@example.com"
                                   value={confirmEmail}
                                   onChange={e => setConfirmEmail(e.target.value)}
@@ -514,7 +607,7 @@ const Cart: React.FC = () => {
                               <label className="text-[10px] font-bold text-[#f4d300] uppercase tracking-widest">Date</label>
                               <input 
                                   type="date"
-                                  className="w-full p-3 bg-black/50 border border-white/20 rounded-xl text-white outline-none focus:border-[#f4d300] text-xs"
+                                  className="w-full p-4 bg-black/50 border-2 border-white/10 rounded-2xl text-white outline-none focus:border-[#f4d300] text-sm transition-colors"
                                   value={requestedDate}
                                   onChange={e => setRequestedDate(e.target.value)}
                                   min={new Date().toISOString().split('T')[0]}
@@ -524,7 +617,7 @@ const Cart: React.FC = () => {
                               <label className="text-[10px] font-bold text-[#f4d300] uppercase tracking-widest">Time</label>
                               <input 
                                   type="time"
-                                  className="w-full p-3 bg-black/50 border border-white/20 rounded-xl text-white outline-none focus:border-[#f4d300] text-xs"
+                                  className="w-full p-4 bg-black/50 border-2 border-white/10 rounded-2xl text-white outline-none focus:border-[#f4d300] text-sm transition-colors"
                                   value={deliveryTime}
                                   onChange={e => setDeliveryTime(e.target.value)}
                               />
@@ -534,9 +627,9 @@ const Cart: React.FC = () => {
 
                   <button 
                       onClick={processOrder}
-                      className="w-full bg-[#f4d300] text-black py-4 rounded-2xl font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:scale-105 transition-transform"
+                      className="w-full bg-[#f4d300] text-black py-5 rounded-[25px] font-bold text-sm uppercase tracking-widest flex items-center justify-center gap-2 hover:scale-[1.02] transition-transform shadow-xl shadow-[#f4d300]/20"
                   >
-                      <MessageCircle size={18} />
+                      <MessageCircle size={20} />
                       Send Order to WhatsApp
                   </button>
               </div>

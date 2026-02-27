@@ -351,20 +351,6 @@ const Settings: React.FC = () => {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {/* Backup Strategy */}
-              <div className="space-y-4">
-                  <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2"><HardDrive size={16} className="text-blue-500" /> Backup Destination</h3>
-                  <select 
-                      className="w-full p-3 bg-gray-50 text-gray-900 rounded-xl border border-gray-200 outline-none focus:ring-1 focus:ring-blue-500 font-bold text-sm"
-                      value={formData.backupMethod || 'GOOGLE_DRIVE'}
-                      onChange={(e) => setFormData({ ...formData, backupMethod: e.target.value as any })}
-                  >
-                      <option value="GOOGLE_DRIVE">Google Drive (Recommended)</option>
-                      <option value="FIREBASE">Firebase (Fast & Real-time)</option>
-                      <option value="CUSTOM_DOMAIN">Custom Domain / Server</option>
-                  </select>
-              </div>
-
               {/* Gemini AI */}
               <div className="space-y-4">
                   <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2"><Sparkles size={16} className="text-purple-500" /> Gemini AI</h3>
@@ -399,21 +385,6 @@ const Settings: React.FC = () => {
                       <div className="space-y-1">
                           <label className="text-[9px] font-bold text-gray-400 uppercase">App ID</label>
                           <input className="w-full p-2 bg-white border border-gray-200 rounded-lg text-xs font-mono" value={formData.firebaseConfig?.appId || ''} onChange={(e) => setFormData({ ...formData, firebaseConfig: { ...formData.firebaseConfig!, appId: e.target.value } })} />
-                      </div>
-                  </div>
-              </div>
-
-              {/* Custom Server */}
-              <div className="space-y-4 p-6 bg-purple-50/30 rounded-2xl border border-purple-100">
-                  <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2"><Server size={16} className="text-purple-600" /> Custom Server</h3>
-                  <div className="space-y-3">
-                      <div className="space-y-1">
-                          <label className="text-[9px] font-bold text-gray-400 uppercase">Endpoint URL</label>
-                          <input className="w-full p-2 bg-white border border-gray-200 rounded-lg text-xs" value={formData.customDomain?.url || ''} onChange={(e) => setFormData({ ...formData, customDomain: { ...formData.customDomain!, url: e.target.value } })} placeholder="https://..." />
-                      </div>
-                      <div className="space-y-1">
-                          <label className="text-[9px] font-bold text-gray-400 uppercase">Server API Key</label>
-                          <input type="password" className="w-full p-2 bg-white border border-gray-200 rounded-lg text-xs" value={formData.customDomain?.apiKey || ''} onChange={(e) => setFormData({ ...formData, customDomain: { ...formData.customDomain!, apiKey: e.target.value } })} />
                       </div>
                   </div>
               </div>

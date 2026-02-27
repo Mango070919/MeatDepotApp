@@ -3,7 +3,7 @@
 
 import { Product, Post, User, Order, PromoCode, AppConfig, UserRole } from './types';
 
-export const CATEGORIES = ['Steaks', 'Biltong', 'Braai Packs', 'Specials', 'Chicken', 'Pork', 'Lamb', 'Sausage', 'Pantry'];
+export const CATEGORIES = ['Steaks', 'Biltong', 'Braai Packs', 'Specials'];
 
 export const INITIAL_PRODUCTS: Product[] = [];
 export const INITIAL_POSTS: Post[] = [];
@@ -100,11 +100,6 @@ export const INITIAL_CONFIG: AppConfig = {
     title: "Heads Up!",
     message: "Meat Depot is not yet trading. This is a preview of our ordering platform. No real orders will be processed."
   },
-  googleDrive: {
-      accessToken: '', 
-      folderId: ''
-  },
-  googleSheetUrl: '',
   firebaseConfig: {
       apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "",
       authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "",
@@ -117,11 +112,6 @@ export const INITIAL_CONFIG: AppConfig = {
   adminCredentials: {
     username: 'MeatAdmin98',
     password: 'Mango070919-'
-  },
-  backupMethod: 'FIREBASE',
-  customDomain: {
-      url: 'https://meatdepot.co.za/wp-json/md-app/v1', // Absolute path to WP Plugin Endpoint
-      apiKey: '' // User to set this in App Settings
   },
   appUrl: 'https://meatdepot.co.za/order-app/',
   socialLinks: {

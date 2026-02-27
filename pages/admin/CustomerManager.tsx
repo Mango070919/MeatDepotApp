@@ -43,7 +43,7 @@ const resizeImage = (file: File, maxWidth: number, maxHeight: number): Promise<s
 };
 
 const CustomerManager: React.FC = () => {
-  const { users, orders, updateUser, deleteUser, login, config, restoreData, syncToSheet } = useApp();
+  const { users, orders, updateUser, deleteUser, login, addUser, config, restoreData, syncToSheet } = useApp();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [filterRole, setFilterRole] = useState<'ALL' | UserRole>('ALL');
@@ -159,7 +159,7 @@ const CustomerManager: React.FC = () => {
                   return;
               }
               // Update local state
-              login(editForm);
+              addUser(editForm);
               // Sync to cloud
               const updatedUsers = [...users, editForm];
               await syncToSheet({ users: updatedUsers });
@@ -194,7 +194,7 @@ const CustomerManager: React.FC = () => {
         setIsUploading(true);
         const resizedImageBase64 = await resizeImage(file, 400, 400);
         let url = resizedImageBase64;
-        if (config.backupMethod === 'CUSTOM_DOMAIN' || (config.googleDrive?.accessToken && config.googleDrive?.folderId)) {
+        if (config.firebaseConfig?.apiKey) {
             const uploadedUrl = await uploadFile(resizedImageBase64, `pfp_${editForm.id}_${Date.now()}.jpg`, config);
             if (uploadedUrl) url = uploadedUrl;
         }
@@ -592,13 +592,32 @@ const CustomerManager: React.FC = () => {
                             <div className="space-y-2">
                                 <label className="text-xs font-bold text-gray-500 uppercase">Points Balance</label>
                                 {isEditing ? (
-                                    <input 
-                                        type="number"
-                                        className="w-full p-3 bg-white border border-gray-200 rounded-xl font-bold text-gray-900 outline-none focus:ring-2 focus:ring-[#f4d300]" 
-                                        value={editForm.loyaltyPoints} 
-                                        onChange={e => setEditForm({ ...editForm, loyaltyPoints: Number(e.target.value) })}
-                                        placeholder="0"
-                                    />
+                                    <div className="flex gap-2">
+                                        <input 
+                                            type="number"
+                                            className="w-full p-3 bg-white border border-gray-200 rounded-xl font-bold text-gray-900 outline-none focus:ring-2 focus:ring-[#f4d300]" 
+                                            value={editForm.loyaltyPoints} 
+                                            onChange={e => setEditForm({ ...editForm, loyaltyPoints: Number(e.target.value) })}
+                                            placeholder="0"
+                                        />
+                                        <button 
+                                            onClick={() => {
+                                                const pointsToGift = parseInt(window.prompt("How many points to gift?") || "0");
+                                                if (pointsToGift > 0) {
+                                                    setEditForm({ ...editForm, loyaltyPoints: (editForm.loyaltyPoints || 0) + pointsToGift });
+                                                    if (editForm.phone) {
+                                                        let phone = editForm.phone.replace(/\s+/g, '').replace(/-/g, '');
+                                                        if (phone.startsWith('0')) phone = '27' + phone.substring(1);
+                                                        const message = `Hi ${editForm.name}, you have been awarded with ${pointsToGift} loyalty points from Meat Depot!`;
+                                                        window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
+                                                    }
+                                                }
+                                            }}
+                                            className="bg-[#f4d300] text-black px-4 rounded-xl font-bold text-xs uppercase tracking-widest whitespace-nowrap"
+                                        >
+                                            Gift Points
+                                        </button>
+                                    </div>
                                 ) : (
                                     <div className="px-4 py-3 bg-white rounded-xl border border-gray-200 font-bold text-gray-700 flex items-center gap-2">
                                         <span className="text-[#f4d300]"><Coins size={16} /></span>

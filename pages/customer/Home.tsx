@@ -198,7 +198,7 @@ const Home: React.FC = () => {
         const resizedImageBase64 = await resizeImage(file, 1200, 800);
         
         let url = resizedImageBase64;
-        if (config.backupMethod === 'CUSTOM_DOMAIN' || (config.googleDrive?.accessToken && config.googleDrive?.folderId)) {
+        if (config.firebaseConfig?.apiKey) {
             const uploadedUrl = await uploadFile(resizedImageBase64, `notice_${Date.now()}.jpg`, config);
             if (uploadedUrl) url = uploadedUrl;
         }
@@ -237,45 +237,74 @@ const Home: React.FC = () => {
 
   const renderHero = () => (
       <section className="relative -mx-4 mb-12">
-        <div className="relative h-[500px] md:h-[600px] w-full overflow-hidden">
+        <div className="relative h-[85vh] md:h-[90vh] w-full overflow-hidden bg-black">
           {youtubeId ? (
-              <div className="w-full h-full relative">
+              <div className="w-full h-full relative opacity-60 mix-blend-luminosity">
                  <iframe 
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover scale-150"
                     src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${youtubeId}&playsinline=1`}
                     title="Meat Depot Video"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                     allowFullScreen
                     style={{ pointerEvents: 'none' }} 
                  ></iframe>
-                 <div className="absolute inset-0 bg-black/20"></div>
+                 <div className="absolute inset-0 bg-black/40"></div>
               </div>
           ) : (
               <img 
                 src={config.homepageBanners[0]} 
                 alt="Meat Depot" 
-                className="w-full h-full object-cover opacity-50 grayscale" 
+                className="w-full h-full object-cover opacity-40 mix-blend-luminosity" 
               />
           )}
           
-          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent flex flex-col justify-end p-8 md:p-10 pb-20 pointer-events-none">
-            <div className="max-w-xl space-y-6 pointer-events-auto">
-              <div className="flex items-center gap-3">
-                <span className="bg-[#f4d300] text-black text-[9px] font-bold px-4 py-1.5 rounded-sm tracking-[0.3em] uppercase">Est. 2025</span>
-                <span className="text-white/40 text-[9px] font-bold tracking-[0.4em] uppercase">PREMIUM MEAT</span>
+          <div className="absolute inset-0 flex flex-col justify-end p-6 md:p-12 pb-24 md:pb-32 pointer-events-none z-10">
+            <div className="w-full space-y-4 pointer-events-auto">
+              <div className="flex items-center gap-3 mb-2">
+                <span className="bg-[#f4d300] text-black text-[10px] font-bold px-3 py-1 tracking-[0.2em] uppercase">EST. 2025</span>
+                <span className="text-white/60 text-[10px] font-bold tracking-[0.3em] uppercase">GQEBERHA</span>
               </div>
-              <h1 className="brand-font text-5xl md:text-9xl font-bold italic text-white leading-[0.8] tracking-tighter whitespace-pre-line">
-                {config.heroTitle || "Savour\nThe Cut."}
-              </h1>
-              <p className="text-sm md:text-lg text-white/60 font-medium max-w-sm leading-relaxed">
-                {config.heroSubtitle || "Expertly sourced local meats. Freshly cut, perfectly aged or cured and delivered directly to your door in Gqeberha."}
+              
+              <div className="title-wrapper transform -skew-x-6 origin-bottom-left">
+                <h1 className="brand-font text-[18vw] md:text-[12vw] font-black text-white leading-[0.85] tracking-tighter uppercase drop-shadow-2xl">
+                  {config.heroTitle?.split('\n').map((line, i) => (
+                    <span key={i} className="block hover:text-[#f4d300] transition-colors duration-300">{line}</span>
+                  )) || (
+                    <>
+                      <span className="block hover:text-[#f4d300] transition-colors duration-300">SAVOUR</span>
+                      <span className="block hover:text-[#f4d300] transition-colors duration-300">THE CUT.</span>
+                    </>
+                  )}
+                </h1>
+              </div>
+
+              <p className="text-sm md:text-xl text-white/80 font-medium max-w-md leading-relaxed mt-6 border-l-4 border-[#f4d300] pl-4">
+                {config.heroSubtitle || "Expertly sourced local meats. Freshly cut, perfectly aged or cured and delivered directly to your door."}
               </p>
-              <button 
-                onClick={() => navigate('/shop')}
-                className="bg-[#f4d300] text-black px-12 py-5 rounded-full font-bold text-[11px] tracking-[0.2em] flex items-center gap-4 shadow-2xl shadow-[#f4d300]/20 hover:scale-105 transition-all uppercase"
-              >
-                {config.heroButtonText || "SHOP COLLECTION"} <ArrowRight size={20} />
-              </button>
+              
+              <div className="pt-8 flex flex-col sm:flex-row gap-4">
+                <button 
+                  onClick={() => navigate('/shop')}
+                  className="bg-[#f4d300] text-black px-10 py-5 font-black text-sm md:text-base tracking-[0.1em] flex items-center justify-center gap-4 hover:bg-white transition-colors uppercase transform -skew-x-6"
+                >
+                  <span className="transform skew-x-6 flex items-center gap-2">
+                    {config.heroButtonText || "SHOP COLLECTION"} <ArrowRight size={20} strokeWidth={3} />
+                  </span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Marquee Banner at bottom of hero */}
+          <div className="absolute bottom-0 left-0 right-0 bg-[#f4d300] text-black py-3 overflow-hidden border-y-2 border-black z-20 transform -rotate-1 scale-105">
+            <div className="flex whitespace-nowrap animate-[marquee_20s_linear_infinite]">
+              {[...Array(10)].map((_, i) => (
+                <span key={i} className="brand-font text-xl font-black uppercase tracking-widest mx-4 flex items-center gap-4">
+                  PREMIUM QUALITY <Star size={14} className="fill-black" /> 
+                  LOCAL SOURCED <Star size={14} className="fill-black" /> 
+                  EXPERTLY CUT <Star size={14} className="fill-black" />
+                </span>
+              ))}
             </div>
           </div>
         </div>
@@ -296,9 +325,8 @@ const Home: React.FC = () => {
             <button
               key={cat}
               onClick={() => navigate(`/shop?category=${cat}`)}
-              className={`flex-shrink-0 px-10 py-5 bg-white/5 border border-white/10 rounded-2xl font-bold text-[10px] tracking-[0.2em] text-white/70 hover:border-[#f4d300] hover:text-[#f4d300] transition-all uppercase flex items-center gap-2 ${cat === 'Buy Again' ? 'border-[#f4d300] text-[#f4d300]' : ''}`}
+              className={`flex-shrink-0 px-10 py-5 bg-white/5 border border-white/10 rounded-2xl font-bold text-[10px] tracking-[0.2em] text-white/70 hover:border-[#f4d300] hover:text-[#f4d300] transition-all uppercase flex items-center gap-2`}
             >
-              {cat === 'Buy Again' && <Repeat size={14} />}
               {cat}
             </button>
           ))}
@@ -344,7 +372,7 @@ const Home: React.FC = () => {
                     )}
                   </div>
                   <div className="p-10 space-y-4">
-                    <h3 className="brand-font text-4xl font-bold text-white tracking-tight">{product.name}</h3>
+                    <h3 className="font-main text-4xl font-bold text-white tracking-tight">{product.name}</h3>
                     <div className="flex justify-between items-end">
                       <div className="space-y-1">
                         <p className="text-[10px] text-white/30 font-bold uppercase tracking-[0.3em]">Price from</p>

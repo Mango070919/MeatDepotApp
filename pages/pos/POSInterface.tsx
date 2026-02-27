@@ -285,7 +285,7 @@ const POSInterface: React.FC = () => {
           const pdfDataUri = await generateInvoicePDF(lastOrder, config, 'INVOICE');
           const fileName = `invoice_${lastOrder.id}.pdf`;
           
-          if (config.backupMethod === 'CUSTOM_DOMAIN' || (config.googleDrive?.accessToken && config.googleDrive?.folderId)) {
+          if (config.firebaseConfig?.apiKey) {
               const url = await uploadFile(pdfDataUri, fileName, config);
               if (url && url.startsWith('http')) {
                   setQrCodeUrl(url);

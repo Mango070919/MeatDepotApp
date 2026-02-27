@@ -216,7 +216,7 @@ const EditPanel: React.FC<EditPanelProps> = ({ post, onSave, onClose, isNew }) =
         setIsUploading(true);
         const resizedImageBase64 = await resizeImage(file, 800, 800);
         let url = resizedImageBase64;
-        if (config.backupMethod === 'CUSTOM_DOMAIN' || (config.googleDrive?.accessToken && config.googleDrive?.folderId)) {
+        if (config.firebaseConfig?.apiKey) {
             const uploadedUrl = await uploadFile(resizedImageBase64, `post_${Date.now()}.jpg`, config);
             if (uploadedUrl) url = uploadedUrl;
         }

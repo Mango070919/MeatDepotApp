@@ -108,19 +108,6 @@ const SyncManager: React.FC = () => {
           </div>
           
           <div className="space-y-6">
-            <div className="space-y-2">
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Backup Destination</label>
-                <select 
-                    className="w-full p-3 bg-gray-50 text-gray-900 rounded-xl border border-gray-200 outline-none focus:ring-1 focus:ring-blue-500 font-bold"
-                    value={formData.backupMethod || 'GOOGLE_DRIVE'}
-                    onChange={(e) => setFormData({ ...formData, backupMethod: e.target.value as any })}
-                >
-                    <option value="GOOGLE_DRIVE">Google Drive (Recommended)</option>
-                    <option value="FIREBASE">Firebase (Fast & Real-time)</option>
-                    <option value="CUSTOM_DOMAIN">Custom Domain / Server</option>
-                </select>
-            </div>
-
             <div className="grid grid-cols-2 gap-4">
                 <button onClick={handleBackup} className="py-4 bg-gray-50 text-gray-800 border border-gray-200 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-gray-100 transition-all flex items-center justify-center gap-2">
                     <Download size={16} /> Export JSON
@@ -130,44 +117,6 @@ const SyncManager: React.FC = () => {
                     <input type="file" accept=".json" className="hidden" onChange={handleRestore} />
                 </label>
             </div>
-          </div>
-        </section>
-
-        {/* Google Drive & Sheets */}
-        <section className="bg-white p-8 rounded-[32px] shadow-sm border border-gray-100 space-y-6">
-          <div className="flex items-center gap-3 border-b border-gray-50 pb-4">
-            <HardDrive className="text-green-600" size={24} />
-            <h2 className="text-xl font-bold text-gray-900">Google Drive & Sheets</h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Drive Access Token</label>
-                  <input 
-                      type="password"
-                      className="w-full p-3 bg-gray-50 text-gray-900 rounded-xl border border-gray-200 outline-none focus:ring-1 focus:ring-green-500 text-sm font-mono" 
-                      value={formData.googleDrive?.accessToken || ''} 
-                      onChange={(e) => setFormData({ ...formData, googleDrive: { ...formData.googleDrive!, accessToken: e.target.value } })} 
-                      placeholder="ya29..." 
-                  />
-              </div>
-              <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Drive Folder ID</label>
-                  <input 
-                      className="w-full p-3 bg-gray-50 text-gray-900 rounded-xl border border-gray-200 outline-none focus:ring-1 focus:ring-green-500 text-sm font-mono" 
-                      value={formData.googleDrive?.folderId || ''} 
-                      onChange={(e) => setFormData({ ...formData, googleDrive: { ...formData.googleDrive!, folderId: e.target.value } })} 
-                      placeholder="1fWq..." 
-                  />
-              </div>
-              <div className="space-y-2 md:col-span-2">
-                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Google Sheet URL / ID</label>
-                  <input 
-                      className="w-full p-3 bg-gray-50 text-gray-900 rounded-xl border border-gray-200 outline-none focus:ring-1 focus:ring-green-500 text-sm" 
-                      value={formData.googleSheetUrl || ''} 
-                      onChange={(e) => setFormData({ ...formData, googleSheetUrl: e.target.value })} 
-                      placeholder="https://docs.google.com/spreadsheets/d/..." 
-                  />
-              </div>
           </div>
         </section>
 
@@ -208,35 +157,6 @@ const SyncManager: React.FC = () => {
                       className="w-full p-3 bg-gray-50 text-gray-900 rounded-xl border border-gray-200 outline-none focus:ring-1 focus:ring-orange-500 text-sm font-mono" 
                       value={formData.firebaseConfig?.appId || ''} 
                       onChange={(e) => setFormData({ ...formData, firebaseConfig: { ...formData.firebaseConfig!, appId: e.target.value } })} 
-                  />
-              </div>
-          </div>
-        </section>
-
-        {/* Custom Server / Domain */}
-        <section className="bg-white p-8 rounded-[32px] shadow-sm border border-gray-100 space-y-6">
-          <div className="flex items-center gap-3 border-b border-gray-50 pb-4">
-            <Server className="text-purple-600" size={24} />
-            <h2 className="text-xl font-bold text-gray-900">Custom Server Config</h2>
-          </div>
-          <div className="space-y-4">
-              <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Endpoint URL</label>
-                  <input 
-                      className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:border-purple-500"
-                      placeholder="https://your-api.com/v1"
-                      value={formData.customDomain?.url || ''}
-                      onChange={(e) => setFormData({ ...formData, customDomain: { ...formData.customDomain!, url: e.target.value } })}
-                  />
-              </div>
-              <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Server API Key</label>
-                  <input 
-                      type="password"
-                      className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:border-purple-500"
-                      placeholder="Secret Key"
-                      value={formData.customDomain?.apiKey || ''}
-                      onChange={(e) => setFormData({ ...formData, customDomain: { ...formData.customDomain!, apiKey: e.target.value } })}
                   />
               </div>
           </div>

@@ -222,7 +222,7 @@ const HomeEditor: React.FC = () => {
         const resizedImageBase64 = await resizeImage(file, 1200, 800);
         
         let url = resizedImageBase64;
-        if (config.backupMethod === 'CUSTOM_DOMAIN' || (config.googleDrive?.accessToken && config.googleDrive?.folderId)) {
+        if (config.firebaseConfig?.apiKey) {
             const uploadedUrl = await uploadFile(resizedImageBase64, `${field}_${Date.now()}.jpg`, config);
             if (uploadedUrl) url = uploadedUrl;
         }
@@ -252,7 +252,7 @@ const HomeEditor: React.FC = () => {
         const base64 = await fileToBase64(file);
         
         let url = base64;
-        if (config.backupMethod === 'CUSTOM_DOMAIN' || (config.googleDrive?.accessToken && config.googleDrive?.folderId) || config.backupMethod === 'FIREBASE') {
+        if (config.firebaseConfig?.apiKey) {
             const uploadedUrl = await uploadFile(base64, `${field}_sound_${Date.now()}.wav`, config);
             if (uploadedUrl) url = uploadedUrl;
         }

@@ -68,7 +68,7 @@ const Navbar: React.FC = () => {
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
 
-  const isAdminRoute = location.pathname.startsWith('/admin');
+  const isAdminRoute = location.pathname.startsWith('/admin') && location.pathname !== '/admin-login';
 
   const handleLogout = () => {
     logout();
@@ -197,7 +197,7 @@ const Navbar: React.FC = () => {
   return (
     <>
       <nav 
-        className={`bg-black sticky top-0 z-[60] px-4 py-2 flex items-center justify-between border-b border-white/5 shadow-2xl transition-transform duration-300 ${isVisible ? 'translate-y-0' : '-translate-y-full'}`}
+        className={`bg-black sticky top-0 z-[60] px-4 py-2 flex items-center justify-between border-b-2 border-white/10 shadow-2xl transition-transform duration-300 ${isVisible ? 'translate-y-0' : '-translate-y-full'}`}
       >
         <div 
           className="flex items-center cursor-pointer transition-all active:scale-95 group" 
@@ -206,12 +206,12 @@ const Navbar: React.FC = () => {
           <img 
             src={config.logoUrl} 
             alt="Meat Depot Logo" 
-            className="h-24 w-auto object-contain"
+            className="h-16 w-auto object-contain"
           />
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3">
-          {config.googleDrive?.accessToken && (
+          {config.firebaseConfig?.apiKey && (
             <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border transition-all ${isCloudSyncing ? 'bg-[#f4d300]/10 border-[#f4d300]/30 text-[#f4d300]' : 'bg-white/5 border-white/10 text-white/20'}`} title={isCloudSyncing ? "Syncing..." : "Cloud Connected"}>
                 {isCloudSyncing ? <RefreshCw size={12} className="animate-spin" /> : <Cloud size={12} />}
                 <span className="text-[8px] font-bold uppercase tracking-widest hidden sm:inline">
@@ -222,11 +222,11 @@ const Navbar: React.FC = () => {
 
           <button 
             onClick={() => navigate('/cart')}
-            className="relative w-9 h-9 bg-[#f4d300] text-black rounded-full flex items-center justify-center hover:scale-110 transition-transform shadow-lg shadow-[#f4d300]/20"
+            className="relative w-10 h-10 bg-[#f4d300] text-black flex items-center justify-center hover:scale-110 transition-transform shadow-lg shadow-[#f4d300]/20 transform -skew-x-6"
           >
-            <ShoppingCart size={18} strokeWidth={2.5} />
+            <ShoppingCart size={18} strokeWidth={2.5} className="transform skew-x-6" />
             {itemCount > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 bg-black text-[#f4d300] text-[8px] font-bold w-4 h-4 flex items-center justify-center rounded-full border border-[#f4d300] animate-in zoom-in duration-300">
+              <span className="absolute -top-1.5 -right-1.5 bg-black text-[#f4d300] text-[10px] font-black w-5 h-5 flex items-center justify-center border-2 border-[#f4d300] animate-in zoom-in duration-300 transform skew-x-6">
                 {itemCount}
               </span>
             )}
@@ -236,35 +236,43 @@ const Navbar: React.FC = () => {
             href="https://wa.me/27632148131" 
             target="_blank" 
             rel="noopener noreferrer" 
-            className="w-9 h-9 bg-[#f4d300] text-black rounded-full flex items-center justify-center hover:scale-110 transition-transform shadow-lg shadow-[#f4d300]/20"
+            className="w-10 h-10 bg-[#f4d300] text-black flex items-center justify-center hover:scale-110 transition-transform shadow-lg shadow-[#f4d300]/20 transform -skew-x-6"
           >
-            <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18" className="transform skew-x-6">
               <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L0 24l6.335-1.662c1.72.94 3.659 1.437 5.634 1.437h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
             </svg>
           </a>
 
           <button 
-            onClick={() => setIsMenuOpen(true)} 
-            className="p-3 text-white/50 hover:text-[#f4d300] transition-colors rounded-full hover:bg-white/5"
+            onClick={() => navigate('/auth')}
+            className="w-10 h-10 bg-[#f4d300] text-black flex items-center justify-center hover:scale-110 transition-transform shadow-lg shadow-[#f4d300]/20 transform -skew-x-6"
+            title={currentUser ? "My Profile" : "Sign In / Sign Up"}
           >
-            <Menu size={24} strokeWidth={2.5} />
+            <User size={18} strokeWidth={2.5} className="transform skew-x-6" />
+          </button>
+
+          <button 
+            onClick={() => setIsMenuOpen(true)} 
+            className="p-2 text-white/50 hover:text-[#f4d300] transition-colors hover:bg-white/5 ml-1"
+          >
+            <Menu size={28} strokeWidth={2.5} />
           </button>
         </div>
       </nav>
 
       {isMenuOpen && (
         <div className="fixed inset-0 bg-black/95 glass z-[110] p-6 flex flex-col animate-in fade-in duration-500">
-          <div className="flex items-center justify-between pb-6">
+          <div className="flex items-center justify-between pb-6 border-b-2 border-white/10">
             <div onClick={() => { setIsMenuOpen(false); navigate('/'); }} className="cursor-pointer active:scale-95 transition-transform">
-                <img src={config.logoUrl} alt="Meat Depot Logo" className="h-20 w-auto object-contain" />
+                <img src={config.logoUrl} alt="Meat Depot Logo" className="h-16 w-auto object-contain" />
             </div>
             <button onClick={() => setIsMenuOpen(false)} className="p-3 text-white/50 hover:text-[#f4d300] transition-colors rounded-full hover:bg-white/5">
-              <X size={24} strokeWidth={2.5} />
+              <X size={32} strokeWidth={2.5} />
             </button>
           </div>
           
-          <nav className="flex-1 flex flex-col justify-between overflow-y-auto no-scrollbar">
-            <div className="space-y-3">
+          <nav className="flex-1 flex flex-col justify-between overflow-y-auto no-scrollbar pt-6">
+            <div className="space-y-2">
               {activeMenuOrder.map((key, index) => (
                   <MenuLinkItem 
                     key={key} 
@@ -281,10 +289,12 @@ const Navbar: React.FC = () => {
             {currentUser && (
               <button 
                 onClick={handleLogout}
-                className="w-full bg-white/5 text-white/50 py-5 rounded-2xl font-bold text-xs tracking-widest flex items-center justify-center gap-3 hover:bg-white/10 hover:text-white transition-colors uppercase mt-6"
+                className="w-full bg-white/5 text-white/50 py-5 font-black text-sm tracking-widest flex items-center justify-center gap-3 hover:bg-red-500 hover:text-white transition-colors uppercase mt-6 transform -skew-x-6"
               >
-                <LogOut size={16} />
-                Sign Out
+                <span className="transform skew-x-6 flex items-center gap-2">
+                  <LogOut size={18} strokeWidth={3} />
+                  Sign Out
+                </span>
               </button>
             )}
           </nav>

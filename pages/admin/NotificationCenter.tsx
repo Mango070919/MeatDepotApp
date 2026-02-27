@@ -64,7 +64,7 @@ const NotificationCenter: React.FC = () => {
         let url = resizedImageBase64;
         
         // Upload to Cloud if configured
-        if (config.backupMethod === 'CUSTOM_DOMAIN' || (config.googleDrive?.accessToken && config.googleDrive?.folderId)) {
+        if (config.firebaseConfig?.apiKey) {
             const uploadedUrl = await uploadFile(resizedImageBase64, `notif_${Date.now()}.jpg`, config);
             if (uploadedUrl) url = uploadedUrl;
         }

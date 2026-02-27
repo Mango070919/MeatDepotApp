@@ -15,6 +15,7 @@ import Home from './pages/customer/Home';
 import Shop from './pages/customer/Shop';
 import Cart from './pages/customer/Cart';
 import RequestQuote from './pages/customer/RequestQuote';
+import CustomerAuth from './pages/auth/CustomerAuth';
 
 // Common Pages
 import Tutorial from './pages/common/Tutorial';
@@ -110,44 +111,58 @@ const ThemeInjector: React.FC = () => {
 const ActivityHeartbeat: React.FC = () => {
     const { currentUser, updateUser, logout } = useApp();
     const location = useLocation();
+    const lastUpdateRef = React.useRef(0);
+    const currentUserRef = React.useRef(currentUser);
 
     useEffect(() => {
-        if (!currentUser) return;
-        if (currentUser.forceLogout) {
+        currentUserRef.current = currentUser;
+    }, [currentUser]);
+
+    useEffect(() => {
+        const user = currentUserRef.current;
+        if (!user) return;
+        if (user.forceLogout) {
             alert("Your session has been terminated by an administrator.");
-            updateUser({ ...currentUser, forceLogout: false });
+            updateUser({ ...user, forceLogout: false });
             logout();
             return;
         }
         
         const updateActivity = () => {
-            const now = new Date().toISOString();
+            const currentUserNow = currentUserRef.current;
+            if (!currentUserNow) return;
+            
+            const now = Date.now();
+            if (now - lastUpdateRef.current < 60000) return; // Max once per minute
+            lastUpdateRef.current = now;
+            
+            const isoNow = new Date(now).toISOString();
             
             // Attempt to get location if allowed
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     (pos) => {
                         updateUser({ 
-                            ...currentUser, 
-                            lastActive: now,
+                            ...currentUserNow, 
+                            lastActive: isoNow,
                             lastLocation: { lat: pos.coords.latitude, lng: pos.coords.longitude }
                         });
                     },
                     (err) => {
                         // If blocked or error, just update time
-                        updateUser({ ...currentUser, lastActive: now });
+                        updateUser({ ...currentUserNow, lastActive: isoNow });
                     },
                     { enableHighAccuracy: true, timeout: 5000 }
                 );
             } else {
-                updateUser({ ...currentUser, lastActive: now });
+                updateUser({ ...currentUserNow, lastActive: isoNow });
             }
         };
         
         updateActivity();
         const interval = setInterval(updateActivity, 5 * 60 * 1000);
         return () => clearInterval(interval);
-    }, [location.pathname, currentUser]);
+    }, [location.pathname]);
 
     return null;
 }
@@ -201,6 +216,7 @@ const AppRoutes: React.FC = () => {
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<FairUsagePolicy />} />
           
+          <Route path="/auth" element={<CustomerAuth />} />
           <Route path="/cart" element={<Cart />} />
           
           <Route path="/payment/success" element={<PaymentSuccess />} />
@@ -239,7 +255,7 @@ const AppRoutes: React.FC = () => {
 const App: React.FC = () => {
   return (
     <AppProvider>
-      <Router>
+      <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <AppRoutes />
       </Router>
     </AppProvider>

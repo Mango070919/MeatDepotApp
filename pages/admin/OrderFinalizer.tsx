@@ -134,7 +134,7 @@ const OrderFinalizer: React.FC = () => {
           const pdfBase64 = await generateInvoicePDF(tempOrder, config, docType);
           
           // 2. Upload PDF
-          const hasCloud = config.backupMethod === 'CUSTOM_DOMAIN' || (config.googleDrive?.accessToken && config.googleDrive?.folderId);
+          const hasCloud = !!config.firebaseConfig?.apiKey;
           if (!hasCloud) {
               alert("Cloud storage is not configured. Cannot upload document to send.");
               setIsSending(false);

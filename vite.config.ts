@@ -7,6 +7,9 @@ export default defineConfig({
   plugins: [react()],
   // CHANGE: Using './' makes the app flexible. It will work in ANY folder you upload it to.
   base: '/', 
+  server: {
+    hmr: false
+  },
   build: {
     outDir: 'dist',
     sourcemap: false

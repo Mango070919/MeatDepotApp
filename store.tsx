@@ -2,11 +2,8 @@
 import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import { Product, Order, User, CartItem, AppNotification, AppConfig, UserRole, OrderStatus, Post, UnitType, Review, PromoCode, ActivityLog, RawMaterial, ProductionBatch } from './types';
 import { INITIAL_PRODUCTS, INITIAL_CONFIG, INITIAL_POSTS, INITIAL_USERS, INITIAL_ORDERS, CUSTOMER_DATABASE_SHEET, INITIAL_PROMO_CODES } from './constants';
-import { loadAppStateFromDrive, saveAppStateToDrive } from './services/googleDriveService';
-import { loadFromDomain, saveToDomain } from './services/domainService';
-import { initFirebase, saveStateToFirebase, loadStateFromFirebase } from './services/firebaseService';
+import { initFirebase, saveStateToFirebase, loadStateFromFirebase, subscribeToFirebaseState } from './services/firebaseService';
 import { deleteFile } from './services/storageService';
-import { extractSheetId, loadStateFromSheet, saveStateToSheet } from './services/sheetService';
 import { playSound } from './services/soundService';
 
 interface PreviewData {
@@ -35,12 +32,14 @@ interface AppState {
   previewData: PreviewData | null;
   // Actions
   login: (user: User) => void;
+  addUser: (user: User) => void;
   logout: () => void;
   updateUser: (user: User) => void;
   deleteUser: (userId: string) => void;
   updateUserPassword: (email: string, newPassword: string) => void;
   addToCart: (product: Product, quantity: number, weight?: number, selectedOptions?: string[], vacuumPacked?: boolean) => void;
   removeFromCart: (cartItemId: string) => void;
+  updateCartItemQuantity: (cartItemId: string, newQuantity: number) => void;
   clearCart: () => void;
   placeOrder: (order: Order, usedPromoCodeId?: string) => void;
   updateOrder: (orderId: string, updates: Partial<Order>) => void;
@@ -153,7 +152,19 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
     const saved = localStorage.getItem('md_currentUser');
-    return saved ? JSON.parse(saved) : null;
+    if (saved) {
+        try {
+            const parsed = JSON.parse(saved);
+            // Don't auto-login admin or staff
+            if (parsed && (parsed.role === 'ADMIN' || parsed.role === 'DRIVER' || parsed.role === 'CASHIER' || parsed.id === 'admin')) {
+                return null;
+            }
+            return parsed;
+        } catch (e) {
+            return null;
+        }
+    }
+    return null;
   });
 
   const [cart, setCart] = useState<CartItem[]>(() => {
@@ -236,10 +247,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       }
   }, [config.firebaseConfig?.apiKey, config.firebaseConfig?.projectId]);
 
+  const isRemoteUpdateRef = useRef(false);
+
   // Auto-sync on critical changes
   useEffect(() => {
+    if (isRemoteUpdateRef.current) {
+        return;
+    }
+    
     // Only sync if we have a cloud method configured and we've already loaded initial data
-    const hasCloud = config.firebaseConfig?.apiKey || (config.googleDrive?.accessToken && config.googleDrive?.folderId) || config.customDomain?.url;
+    const hasCloud = !!config.firebaseConfig?.apiKey;
     
     if (hasCloud && hasLoadedFromCloud && !isCloudSyncing) {
       // Debounce sync slightly to avoid spamming on rapid changes
@@ -281,10 +298,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       if (hasLoadedFromCloud) return;
       
       const hasFirebase = !!config.firebaseConfig?.apiKey;
-      const hasDomain = !!config.customDomain?.url && !!config.customDomain?.apiKey;
-      const hasDrive = !!config.googleDrive?.accessToken && !!config.googleDrive?.folderId;
 
-      if (!hasFirebase && !hasDomain && !hasDrive) return;
+      if (!hasFirebase) return;
 
       setIsCloudSyncing(true);
       
@@ -302,49 +317,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           } catch(e) { console.warn("Firebase load failed/skipped", e); }
       }
 
-      // 2. Try Loading from Domain
-      if (hasDomain) {
-          try {
-              const domainData = await loadFromDomain(config);
-              if (domainData) {
-                  restoreData(domainData);
-                  setHasLoadedFromCloud(true);
-                  setIsCloudSyncing(false);
-                  return;
-              }
-          } catch(e) { console.warn("Domain load skipped", e); }
-      }
-
-      // 3. Try Drive if Domain failed or not configured
-      if (hasDrive) {
-        try {
-          const cloudData = await loadAppStateFromDrive(config);
-          if (cloudData) {
-              restoreData(cloudData);
-              setHasLoadedFromCloud(true);
-          }
-        } catch (e: any) {
-          if (e.message === 'token_expired') {
-              setNotifications(prev => {
-                  if (prev.some(n => n.title === "Sync Error: Token Expired")) return prev;
-                  return [{
-                      id: `sync-err-${Date.now()}`,
-                      title: "Sync Error: Token Expired",
-                      body: "Your Google Drive access token has expired. Cloud data could not be loaded. Please update in App Manager.",
-                      type: 'ANNOUNCEMENT',
-                      timestamp: new Date().toISOString(),
-                      targetUserId: 'admin'
-                  }, ...prev];
-              });
-          } else {
-              console.error("Drive load failed", e);
-          }
-        }
-      }
       setIsCloudSyncing(false);
     };
     initCloudLoad();
-  }, [config.firebaseConfig?.apiKey, config.googleDrive?.accessToken, config.customDomain?.url, config.customDomain?.apiKey]);
+  }, [config.firebaseConfig?.apiKey]);
 
   const syncToSheet = async (overrides?: any) => {
       setIsCloudSyncing(true);
@@ -368,27 +344,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           // 1. SYNC TO FIREBASE
           if (effectiveConfig.firebaseConfig?.apiKey) {
               initFirebase(effectiveConfig);
-              syncPromises.push(saveStateToFirebase(dataToSave));
+              syncPromises.push(saveStateToFirebase(dataToSave).catch(e => {
+                  console.error("Firebase sync failed:", e);
+                  throw e;
+              }));
           }
 
-          // 2. SYNC TO CUSTOM DOMAIN (Self-Hosted)
-          if (effectiveConfig.customDomain?.url && effectiveConfig.customDomain?.apiKey) {
-              syncPromises.push(saveToDomain(dataToSave, effectiveConfig));
-          }
-
-          // 3. SYNC TO GOOGLE DRIVE (Backup/CMS)
-          if (effectiveConfig.googleDrive?.accessToken && effectiveConfig.googleDrive?.folderId) {
-              // Also sync to Sheet if configured
-              const sheetTarget = effectiveConfig.googleSheetUrl || CUSTOMER_DATABASE_SHEET;
-              const sheetId = extractSheetId(sheetTarget);
-              if (sheetId) {
-                  // Sheet sync is important, we'll await it or at least track it
-                  syncPromises.push(saveStateToSheet(sheetId, dataToSave, effectiveConfig.googleDrive.accessToken));
-              }
-              syncPromises.push(saveAppStateToDrive(dataToSave, effectiveConfig));
-          }
-
-          // 4. PING LOCAL SERVER (For Vercel/Full-stack awareness)
+          // 2. PING LOCAL SERVER (For Vercel/Full-stack awareness)
           try {
               syncPromises.push(fetch('/api/sync', {
                   method: 'POST',
@@ -403,22 +365,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           logActivity('SYNC', 'System state redeployed to cloud(s)');
           return true;
       } catch (e: any) {
-          if (e.message === 'token_expired') {
-              setNotifications(prev => {
-                  if (prev.some(n => n.title === "Sync Error: Token Expired")) return prev;
-                  return [{
-                      id: `sync-err-${Date.now()}`,
-                      title: "Sync Error: Token Expired",
-                      body: "Your Google Drive access token has expired. Please update it in Admin > App Manager to resume backups.",
-                      type: 'ANNOUNCEMENT',
-                      timestamp: new Date().toISOString(),
-                      targetUserId: 'admin'
-                  }, ...prev];
-              });
-              console.warn("Sync failed: Token Expired. Local state preserved.");
-          } else {
-              console.error("Sync Error", e);
-          }
+          console.error("Sync Error", e);
       } finally {
           setIsCloudSyncing(false);
       }
@@ -426,14 +373,18 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const addNotification = (notif: AppNotification) => setNotifications(prev => [notif, ...prev]);
 
-  const login = (user: User) => {
+  const addUser = (user: User) => {
     setUsers(prev => {
-      const exists = prev.some(u => u.id === user.id || u.email.toLowerCase() === user.email.toLowerCase());
+      const exists = prev.some(u => u.id === user.id || (user.email && u.email.toLowerCase() === user.email.toLowerCase()));
       if (exists) {
-        return prev.map(u => (u.id === user.id || u.email.toLowerCase() === user.email.toLowerCase()) ? { ...u, ...user } : u);
+        return prev.map(u => (u.id === user.id || (user.email && u.email.toLowerCase() === user.email.toLowerCase())) ? { ...u, ...user } : u);
       }
       return [...prev, user];
     });
+  };
+
+  const login = (user: User) => {
+    addUser(user);
     setCurrentUser(user);
     logActivity('LOGIN', `User ${user.name} logged in`);
   };
@@ -487,6 +438,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const removeFromCart = (cartItemId: string) => setCart(prev => prev.filter(item => item.id !== cartItemId));
+  const updateCartItemQuantity = (cartItemId: string, newQuantity: number) => {
+    if (newQuantity <= 0) {
+      removeFromCart(cartItemId);
+      return;
+    }
+    setCart(prev => prev.map(item => item.id === cartItemId ? { ...item, quantity: newQuantity } : item));
+  };
   const clearCart = () => setCart([]);
 
   const placeOrder = (order: Order, usedPromoCodeId?: string) => {
@@ -515,7 +473,25 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const updateOrder = (orderId: string, updates: Partial<Order>) => {
-    setOrders(prev => prev.map(o => o.id === orderId ? { ...o, ...updates } : o));
+    setOrders(prev => {
+      const order = prev.find(o => o.id === orderId);
+      if (order && (updates.status === OrderStatus.DELIVERED || updates.status === OrderStatus.PAID) && (order.status !== OrderStatus.DELIVERED && order.status !== OrderStatus.PAID)) {
+        // Order is being marked as delivered or paid (completed)
+        if (order.total >= 500 && order.customerId && order.customerId !== 'anonymous') {
+          // Add loyalty point: R500 = 1 point
+          const pointsEarned = Math.floor(order.total / 500);
+          if (pointsEarned > 0) {
+            setUsers(users => users.map(u => {
+              if (u.id === order.customerId) {
+                return { ...u, loyaltyPoints: (u.loyaltyPoints || 0) + pointsEarned };
+              }
+              return u;
+            }));
+          }
+        }
+      }
+      return prev.map(o => o.id === orderId ? { ...o, ...updates } : o);
+    });
     logActivity('EDIT', `Order #${orderId} updated: ${JSON.stringify(updates)}`);
   };
 
@@ -637,6 +613,19 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
+  useEffect(() => {
+    if (hasLoadedFromCloud && config.firebaseConfig?.apiKey) {
+      const unsubscribe = subscribeToFirebaseState((update) => {
+        isRemoteUpdateRef.current = true;
+        restoreData(update);
+        setTimeout(() => {
+            isRemoteUpdateRef.current = false;
+        }, 1000);
+      });
+      return () => unsubscribe();
+    }
+  }, [hasLoadedFromCloud, config.firebaseConfig?.apiKey, config.firebaseConfig?.projectId]);
+
   const finalConfig = (isPreviewMode && previewData?.config) ? previewData.config : config;
 
   return (
@@ -646,7 +635,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       config: finalConfig, 
       isLoading, posts: (isPreviewMode && previewData?.posts) ? previewData.posts : posts, 
       isPreviewMode, isCloudSyncing, hasLoadedFromCloud, previewData,
-      login, logout, addToCart, removeFromCart, clearCart, placeOrder, updateOrder, deleteOrder,
+      login, logout, addUser, addToCart, removeFromCart, updateCartItemQuantity, clearCart, placeOrder, updateOrder, deleteOrder,
       updateProduct, deleteProduct, addProduct, updateConfig, addNotification, deleteNotification,
       updateUser, deleteUser, updateUserPassword, addPost, updatePost, deletePost, 
       addPromoCode, deletePromoCode, addReview, deleteReview, replyToReview, 
