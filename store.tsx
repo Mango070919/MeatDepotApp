@@ -310,11 +310,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
               const firebaseData = await loadStateFromFirebase();
               if (firebaseData) {
                   restoreData(firebaseData);
-                  setHasLoadedFromCloud(true);
-                  setIsCloudSyncing(false);
-                  return;
               }
-          } catch(e) { console.warn("Firebase load failed/skipped", e); }
+              // Mark as loaded even if empty, so auto-sync can start
+              setHasLoadedFromCloud(true);
+          } catch(e) { 
+              console.warn("Firebase load failed/skipped", e); 
+              // Still mark as loaded to allow local-first operation with auto-sync attempts
+              setHasLoadedFromCloud(true);
+          }
       }
 
       setIsCloudSyncing(false);
@@ -366,6 +369,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           return true;
       } catch (e: any) {
           console.error("Sync Error", e);
+          throw e; // Throw so UI can catch it
       } finally {
           setIsCloudSyncing(false);
       }

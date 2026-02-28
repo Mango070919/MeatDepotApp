@@ -101,10 +101,15 @@ const AdminDashboard: React.FC = () => {
           await syncToSheet();
           alert("System Redeployed Successfully! All changes are now live.");
       } catch (e: any) {
-          if (e.message === 'token_expired') {
-             alert("Redeploy Failed: Token Expired. Go to App Manager to update.");
+          console.error("Manual Sync Error:", e);
+          if (e.message?.includes('quota') || e.code === 'resource-exhausted') {
+              alert("Redeploy Failed: Database Quota Exceeded. Please upgrade your Firebase plan or reduce data size.");
+          } else if (e.message?.includes('permission-denied') || e.code === 'permission-denied') {
+              alert("Redeploy Failed: Permission Denied. Check your Firebase security rules.");
+          } else if (e.message === 'token_expired') {
+              alert("Redeploy Failed: Token Expired. Go to App Manager to update.");
           } else {
-             alert("Redeploy Failed. Please check internet connection.");
+              alert(`Redeploy Failed: ${e.message || 'Unknown error'}. Please check internet connection and Firebase config.`);
           }
       }
   };

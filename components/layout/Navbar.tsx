@@ -80,8 +80,9 @@ const Navbar: React.FC = () => {
       try {
           await syncToSheet();
           alert("System State Redeployed successfully.");
-      } catch (e) {
-          alert("Redeploy failed: " + e);
+      } catch (e: any) {
+          console.error("Navbar Sync Error:", e);
+          alert(`Redeploy failed: ${e.message || 'Unknown error'}. Check Firebase config.`);
       }
   };
 
