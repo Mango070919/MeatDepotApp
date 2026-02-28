@@ -40,9 +40,5 @@
     "tsx": "^4.19.2",
     "typescript": "~5.8.2",
     "vite": "^6.2.0"
-  },
-  "overrides": {
-    "glob": "^11.0.0",
-    "node-domexception": "npm:domexception@^4.0.0"
   }
 }
