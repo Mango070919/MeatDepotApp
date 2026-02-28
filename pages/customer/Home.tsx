@@ -413,11 +413,11 @@ const Home: React.FC = () => {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {displayPosts.map((post) => (
-                <div key={post.id} className="bg-[#121212] rounded-[32px] overflow-hidden border border-white/5 group hover:border-[#f4d300]/30 transition-all">
+                <div key={post.id} className="bg-[#121212] rounded-[32px] overflow-hidden border border-white/5 group hover:border-[#f4d300]/30 transition-all flex flex-col">
                     <div className="aspect-square overflow-hidden relative">
                         <img 
                             src={post.imageUrl} 
-                            alt="News" 
+                            alt={post.title || "News"} 
                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                         />
                         <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full border border-white/10">
@@ -426,24 +426,25 @@ const Home: React.FC = () => {
                             </p>
                         </div>
                     </div>
-                    <div className="p-6 space-y-4">
-                        <p className="text-white/80 text-sm leading-relaxed line-clamp-3 italic">
-                            "{post.caption}"
-                        </p>
-                        <div className="flex items-center justify-between pt-4 border-t border-white/5">
-                            <div className="flex items-center gap-2 text-[#f4d300]">
-                                <Facebook size={14} />
-                                <span className="text-[10px] font-bold uppercase tracking-widest">Facebook</span>
-                            </div>
+                    <div className="p-8 flex-1 flex flex-col justify-between space-y-6">
+                        <div className="space-y-3">
+                            <h3 className="font-main text-xl font-bold text-white leading-tight">{post.title || 'Meat Depot Update'}</h3>
+                            <p className="text-white/60 text-sm leading-relaxed line-clamp-3">
+                                {post.caption}
+                            </p>
+                        </div>
+                        
+                        {post.link && (
                             <a 
-                                href={config.socialLinks?.facebook || "https://facebook.com/meatdepotgq"} 
+                                href={post.link} 
                                 target="_blank" 
                                 rel="noopener noreferrer"
-                                className="text-white/40 hover:text-[#f4d300] transition-colors"
+                                className="inline-flex items-center gap-2 text-[#f4d300] font-bold text-xs uppercase tracking-widest hover:gap-3 transition-all group/btn"
                             >
-                                <ArrowRight size={18} />
+                                Read More
+                                <ArrowRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />
                             </a>
-                        </div>
+                        )}
                     </div>
                 </div>
             ))}

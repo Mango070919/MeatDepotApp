@@ -16,6 +16,7 @@ export const fetchFacebookPosts = async (pageId: string, accessToken: string): P
     
     return data.data.map((fbPost: any) => ({
       id: `fb_${fbPost.id}`,
+      title: 'Facebook Update',
       caption: fbPost.message || '',
       imageUrl: fbPost.full_picture || 'https://images.unsplash.com/photo-1513135243354-206219b15da3?q=80&w=800',
       timestamp: fbPost.created_time,

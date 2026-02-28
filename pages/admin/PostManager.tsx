@@ -91,7 +91,7 @@ const PostManager: React.FC = () => {
   };
 
   const handleAddNew = () => {
-    setEditingPost({ caption: '', imageUrl: 'https://images.unsplash.com/photo-1513135243354-206219b15da3?q=80&w=800', visible: true });
+    setEditingPost({ title: '', caption: '', imageUrl: 'https://images.unsplash.com/photo-1513135243354-206219b15da3?q=80&w=800', link: '', visible: true });
     setIsAddingNew(true);
   };
 
@@ -172,7 +172,10 @@ const PostManager: React.FC = () => {
             {orderedPosts.map((post, index) => (
               <div key={post.id} className={`bg-white p-4 rounded-3xl shadow-sm border border-gray-100 flex items-center gap-4 ${!post.visible ? 'opacity-50' : ''}`}>
                 <img src={post.imageUrl} className="w-20 h-20 rounded-2xl object-cover" />
-                <div className="flex-1 min-w-0"><p className="text-sm font-medium text-gray-700 truncate">{post.caption}</p></div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-gray-900 truncate">{post.title || 'No Title'}</p>
+                  <p className="text-xs text-gray-500 truncate">{post.caption}</p>
+                </div>
                 <div className="flex items-center gap-2">
                   <button onClick={() => toggleVisibility(post)} className="p-2.5 rounded-xl bg-gray-50">{post.visible ? <Eye size={18} /> : <EyeOff size={18} />}</button>
                   <button onClick={() => reorderPost(post.id, 'up')} disabled={index === 0} className="p-2.5 bg-gray-50 text-gray-600 rounded-xl disabled:opacity-30"><ArrowUp size={16} /></button>
@@ -256,7 +259,35 @@ const EditPanel: React.FC<EditPanelProps> = ({ post, onSave, onClose, isNew }) =
             onChange={e => setForm({...form, imageUrl: e.target.value})} 
           />
         </div>
-        <div className="space-y-2"><label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Caption</label><textarea className="w-full px-5 py-4 bg-white text-black rounded-2xl min-h-[150px]" value={form.caption} onChange={e => setForm({...form, caption: e.target.value})} placeholder="Write a caption..." /></div>
+        <div className="space-y-2">
+          <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Heading / Title</label>
+          <input 
+            type="text" 
+            className="w-full px-5 py-4 bg-white text-black rounded-2xl outline-none focus:ring-2 focus:ring-[#f4d300]" 
+            value={form.title || ''} 
+            onChange={e => setForm({...form, title: e.target.value})} 
+            placeholder="Post heading..." 
+          />
+        </div>
+        <div className="space-y-2">
+          <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Short Description</label>
+          <textarea 
+            className="w-full px-5 py-4 bg-white text-black rounded-2xl min-h-[100px] outline-none focus:ring-2 focus:ring-[#f4d300]" 
+            value={form.caption} 
+            onChange={e => setForm({...form, caption: e.target.value})} 
+            placeholder="Write a short description..." 
+          />
+        </div>
+        <div className="space-y-2">
+          <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">External Link (Opens on click)</label>
+          <input 
+            type="text" 
+            className="w-full px-5 py-4 bg-white text-black rounded-2xl outline-none focus:ring-2 focus:ring-[#f4d300]" 
+            value={form.link || ''} 
+            onChange={e => setForm({...form, link: e.target.value})} 
+            placeholder="https://example.com" 
+          />
+        </div>
         <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/10"><label className="text-sm font-bold text-white">Public Visibility</label><button type="button" onClick={() => setForm({...form, visible: !form.visible})} className={`relative inline-flex h-6 w-11 rounded-full border-2 border-transparent transition-colors ${form.visible !== false ? 'bg-[#f4d300]' : 'bg-white/10'}`}><span className={`inline-block h-5 w-5 transform rounded-full bg-white transition ${form.visible !== false ? 'translate-x-5' : 'translate-x-0'}`} /></button></div>
       </div>
       <div className="p-6 border-t border-white/10 flex gap-4 bg-[#121212]"><button onClick={onClose} className="flex-1 py-4 font-bold text-white/50 uppercase text-xs tracking-widest">Cancel</button><button onClick={handlePanelSave} disabled={isSaving} className="flex-1 bg-[#f4d300] text-black py-4 rounded-2xl font-bold flex items-center justify-center gap-2 uppercase text-xs tracking-widest">{isSaving ? 'Syncing...' : <><Save size={18} /> Save</>}</button></div>

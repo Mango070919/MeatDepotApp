@@ -52,7 +52,8 @@ export const generateWebArchive = (
     <div class="post-card">
       <img src="${p.imageUrl}" class="post-img" onerror="this.style.display='none'" />
       <div>
-        <h4 style="margin: 0 0 10px 0;">${new Date(p.timestamp).toLocaleDateString()}</h4>
+        <h4 style="margin: 0 0 5px 0;">${p.title || 'Update'}</h4>
+        <p style="margin: 0 0 10px 0; font-size: 10px; color: #999;">${new Date(p.timestamp).toLocaleDateString()}</p>
         <p style="margin: 0; line-height: 1.6; color: #555;">${p.caption}</p>
       </div>
     </div>

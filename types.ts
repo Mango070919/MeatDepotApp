@@ -167,8 +167,10 @@ export interface User {
 
 export interface Post {
   id: string;
-  caption: string;
+  title: string;
+  caption: string; // Used as description
   imageUrl: string;
+  link?: string;
   timestamp: string;
   visible?: boolean;
 }

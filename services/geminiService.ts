@@ -93,10 +93,12 @@ const tools: FunctionDeclaration[] = [
       parameters: {
           type: Type.OBJECT,
           properties: {
-              caption: { type: Type.STRING, description: "The text content of the post." },
-              imageUrl: { type: Type.STRING, description: "URL of the image." }
+              title: { type: Type.STRING, description: "The heading or title of the post." },
+              caption: { type: Type.STRING, description: "The short description or caption of the post." },
+              imageUrl: { type: Type.STRING, description: "URL of the image." },
+              link: { type: Type.STRING, description: "Optional external link." }
           },
-          required: ["caption"]
+          required: ["title", "caption"]
       }
   }
 ];
@@ -237,11 +239,13 @@ export const generateAIAssistance = async (
           }
 
           if (fc.name === 'createNewsPost') {
-              const { caption, imageUrl } = fc.args as any;
+              const { title, caption, imageUrl, link } = fc.args as any;
               ctx.addPost({
                   id: Math.random().toString(36),
+                  title: title || 'New Update',
                   caption,
                   imageUrl: imageUrl || 'https://images.unsplash.com/photo-1544025162-d76694265947',
+                  link,
                   timestamp: new Date().toISOString(),
                   visible: true
               });
