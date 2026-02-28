@@ -12,7 +12,7 @@ import { CheckCircle, XCircle } from 'lucide-react';
 
 // Customer Pages
 import Home from './pages/customer/Home';
-import Shop from './pages/customer/Shop';
+import Shop from './pages/customer/ProductShop';
 import Cart from './pages/customer/Cart';
 import RequestQuote from './pages/customer/RequestQuote';
 import CustomerAuth from './pages/auth/CustomerAuth';

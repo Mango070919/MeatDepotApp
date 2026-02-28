@@ -266,7 +266,10 @@ const ManualSale: React.FC = () => {
                     </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[600px] overflow-y-auto no-scrollbar pr-2">
-                    {products.filter(p => p.name.toLowerCase().includes(searchProduct.toLowerCase())).map(p => (
+                    {products.filter(p => 
+                        p.name.toLowerCase().includes(searchProduct.toLowerCase()) || 
+                        (p.barcode && p.barcode.toLowerCase().includes(searchProduct.toLowerCase()))
+                    ).map(p => (
                         <button key={p.id} onClick={() => handleAddToCart(p)} className="p-4 bg-white border border-gray-200 rounded-2xl flex items-center gap-4 hover:border-[#f4d300] transition-colors text-left group">
                             <img src={p.image} className="w-16 h-16 rounded-xl object-cover bg-gray-100" />
                             <div className="flex-1 min-w-0"><p className="font-bold text-sm text-gray-900 truncate">{p.name}</p><p className="text-xs text-gray-500 mt-1">R{p.price} / {p.unit}</p></div>

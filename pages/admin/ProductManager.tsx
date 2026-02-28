@@ -161,11 +161,33 @@ const ProductManager: React.FC = () => {
   const filteredProducts = products.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
   
   // Stock Overview Calculation
-  const lowStockThreshold = 5; 
   const lowStockItems = products.filter(p => {
+      const threshold = p.lowStockThreshold ?? 5;
       const val = p.unit === UnitType.KG ? (p.stock || 0) / 1000 : (p.stock || 0);
-      return val < lowStockThreshold && p.available;
+      return val < threshold && p.available;
   });
+
+  const { addNotification, notifications } = useApp();
+  const notifiedRef = React.useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+      lowStockItems.forEach(p => {
+          const threshold = p.lowStockThreshold ?? 5;
+          const stock = p.unit === UnitType.KG ? (p.stock || 0) / 1000 : (p.stock || 0);
+          const notifId = `low-stock-${p.id}-${stock}`;
+          
+          if (!notifiedRef.current.has(notifId)) {
+              addNotification({
+                  id: Math.random().toString(36).substr(2, 9),
+                  title: 'Low Stock Alert',
+                  body: `${p.name} is low on stock (${stock}${p.unit}). Threshold is ${threshold}${p.unit}.`,
+                  type: 'ORDER',
+                  timestamp: new Date().toISOString()
+              });
+              notifiedRef.current.add(notifId);
+          }
+      });
+  }, [lowStockItems.length]);
   const totalStockValue = products.reduce((acc, p) => {
       const stock = p.stock || 0;
       const unitValue = p.unit === UnitType.KG ? (p.price / 1000) * stock : p.price * stock;
@@ -214,7 +236,8 @@ const ProductManager: React.FC = () => {
               {filteredProducts.map((p, index) => {
                 const stockDisplay = p.unit === UnitType.KG ? `${((p.stock || 0) / 1000).toFixed(1)}kg` : `${p.stock || 0} units`;
                 const stockVal = p.unit === UnitType.KG ? (p.stock || 0) / 1000 : (p.stock || 0);
-                const isLowStock = stockVal < 5;
+                const threshold = p.lowStockThreshold ?? 5;
+                const isLowStock = stockVal < threshold;
                 const isNoStock = stockVal <= 0;
                 const isOnSpecial = (p.specialPrice || 0) > 0 && (p.specialPrice || 0) < p.price;
 
@@ -284,12 +307,11 @@ const EditPanel: React.FC<EditPanelProps> = ({ product, onSave, onPreview, onClo
   const [costing, setCosting] = useState<ProductCosting>({
       totalCost: product.costing?.totalCost || 0,
       markupPercent: product.costing?.markupPercent || 30,
-      // Maintain legacy structure if present
-      rawMeatCost: product.costing?.rawMeatCost,
-      spicesCost: product.costing?.spicesCost,
-      packagingCost: product.costing?.packagingCost,
-      labelCost: product.costing?.labelCost,
-      overheadPercent: product.costing?.overheadPercent,
+      rawMeatCost: product.costing?.rawMeatCost || 0,
+      spicesCost: product.costing?.spicesCost || 0,
+      packagingCost: product.costing?.packagingCost || 0,
+      labelCost: product.costing?.labelCost || 0,
+      overheadPercent: product.costing?.overheadPercent || 0,
   });
   
   const { config, deleteReview } = useApp();
@@ -298,6 +320,13 @@ const EditPanel: React.FC<EditPanelProps> = ({ product, onSave, onPreview, onClo
   const [newCheckboxLabel, setNewCheckboxLabel] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   
+  useEffect(() => {
+      const total = (costing.rawMeatCost || 0) + (costing.spicesCost || 0) + (costing.packagingCost || 0) + (costing.labelCost || 0);
+      if (total > 0 && total !== costing.totalCost) {
+          setCosting(prev => ({ ...prev, totalCost: total }));
+      }
+  }, [costing.rawMeatCost, costing.spicesCost, costing.packagingCost, costing.labelCost]);
+
   useEffect(() => {
       setForm(prev => ({ ...prev, costing }));
   }, [costing]);
@@ -445,6 +474,16 @@ const EditPanel: React.FC<EditPanelProps> = ({ product, onSave, onPreview, onClo
                     <p className="text-[9px] text-white/40">If set, the special price will automatically revert to 0 after this date.</p>
                 </div>
             )}
+            <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Barcode</label>
+                    <input className="w-full px-5 py-4 bg-white text-gray-900 rounded-2xl outline-none" value={form.barcode || ''} onChange={e => setForm({...form, barcode: e.target.value})} placeholder="Scan or enter barcode" />
+                </div>
+                <div className="space-y-2">
+                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Low Stock Alert ({form.unit === UnitType.KG ? 'kg' : 'units'})</label>
+                    <input type="number" className="w-full px-5 py-4 bg-white text-gray-900 rounded-2xl outline-none" value={form.lowStockThreshold || ''} onChange={e => setForm({...form, lowStockThreshold: Number(e.target.value)})} placeholder="5" />
+                </div>
+            </div>
             <div className="space-y-2"><label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Category</label><select className="w-full px-5 py-4 bg-white text-gray-900 rounded-2xl" value={form.category} onChange={e => setForm({...form, category: e.target.value})}>{CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}</select></div>
             <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2"><label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Unit Type</label><select className="w-full px-5 py-4 bg-white text-gray-900 rounded-2xl" value={form.unit} onChange={e => setForm({...form, unit: e.target.value as UnitType})}>{Object.values(UnitType).map(u => <option key={u} value={u}>{u}</option>)}</select></div>
@@ -488,10 +527,32 @@ const EditPanel: React.FC<EditPanelProps> = ({ product, onSave, onPreview, onClo
       
       {activeTab === 'costing' && (
           <div className="p-8 space-y-6 overflow-y-auto no-scrollbar flex-1">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-4">
+                  <h3 className="text-xs font-bold text-white/40 uppercase tracking-widest border-b border-white/5 pb-2">Cost Components</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                          <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Raw Meat (R)</label>
+                          <input type="number" className="w-full px-4 py-3 bg-white/5 text-white rounded-xl border border-white/10" value={costing.rawMeatCost || ''} onChange={e => setCosting({...costing, rawMeatCost: Number(e.target.value)})} placeholder="0.00" />
+                      </div>
+                      <div className="space-y-2">
+                          <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Spices (R)</label>
+                          <input type="number" className="w-full px-4 py-3 bg-white/5 text-white rounded-xl border border-white/10" value={costing.spicesCost || ''} onChange={e => setCosting({...costing, spicesCost: Number(e.target.value)})} placeholder="0.00" />
+                      </div>
+                      <div className="space-y-2">
+                          <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Packaging (R)</label>
+                          <input type="number" className="w-full px-4 py-3 bg-white/5 text-white rounded-xl border border-white/10" value={costing.packagingCost || ''} onChange={e => setCosting({...costing, packagingCost: Number(e.target.value)})} placeholder="0.00" />
+                      </div>
+                      <div className="space-y-2">
+                          <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Labels (R)</label>
+                          <input type="number" className="w-full px-4 py-3 bg-white/5 text-white rounded-xl border border-white/10" value={costing.labelCost || ''} onChange={e => setCosting({...costing, labelCost: Number(e.target.value)})} placeholder="0.00" />
+                      </div>
+                  </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/5">
                   <div className="space-y-2">
                       <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest flex items-center gap-2">
-                          <DollarSign size={12}/> Unit Cost (R)
+                          <DollarSign size={12}/> Total Unit Cost (R)
                       </label>
                       <input 
                           type="number" 

@@ -94,6 +94,7 @@ export interface Product {
   thicknessOptions?: ThicknessOption[];
   costing?: ProductCosting;
   barcode?: string;
+  lowStockThreshold?: number;
   viewCount?: number;
 }
 
