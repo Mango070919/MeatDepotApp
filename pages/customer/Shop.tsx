@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useApp } from '../../store';
-import { CATEGORIES } from '../../constants';
 import { Search, ShoppingCart, Info, Plus, Minus, X, Weight, ArrowLeft, Star, Settings, Trash2, Edit2, Lock, ChevronDown, Heart, Repeat, Check, Share2, MessageCircle, Package, ShieldCheck, Truck, Monitor, MapPin, Loader2 } from 'lucide-react';
 import { Product, UnitType, Review, UserRole, User } from '../../types';
 import { validateAddress } from '../../services/geminiService';
