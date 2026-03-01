@@ -1,6 +1,8 @@
 import express from "express";
 import nodemailer from "nodemailer";
 import axios from "axios";
+import { put } from "@vercel/blob";
+import { kv } from "@vercel/kv";
 
 const app = express();
 app.use(express.json({ limit: '50mb' }));
@@ -8,6 +10,56 @@ app.use(express.json({ limit: '50mb' }));
 // API Routes
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok", message: "Meat Depot API is running" });
+});
+
+// Vercel KV (Redis) Routes
+app.get("/api/kv/state", async (req, res) => {
+  if (!process.env.KV_REST_API_URL || !process.env.KV_REST_API_TOKEN) {
+    return res.status(500).json({ error: "Vercel KV not configured" });
+  }
+  try {
+    const state = await kv.get("meat_depot_state");
+    res.json(state || {});
+  } catch (error: any) {
+    console.error("KV Get Error:", error);
+    res.status(500).json({ error: error.message || "Failed to fetch state" });
+  }
+});
+
+app.post("/api/kv/state", async (req, res) => {
+  if (!process.env.KV_REST_API_URL || !process.env.KV_REST_API_TOKEN) {
+    return res.status(500).json({ error: "Vercel KV not configured" });
+  }
+  try {
+    const data = req.body;
+    await kv.set("meat_depot_state", data);
+    res.json({ success: true });
+  } catch (error: any) {
+    console.error("KV Set Error:", error);
+    res.status(500).json({ error: error.message || "Failed to save state" });
+  }
+});
+
+// Vercel Blob Upload Route
+app.post("/api/upload", async (req, res) => {
+  const filename = req.query.filename as string;
+
+  if (!process.env.BLOB_READ_WRITE_TOKEN) {
+    return res.status(500).json({ error: "Vercel Blob token not configured" });
+  }
+
+  try {
+    // Use the request stream directly for upload
+    const blob = await put(filename, req, {
+      access: 'public',
+      token: process.env.BLOB_READ_WRITE_TOKEN
+    });
+
+    res.json(blob);
+  } catch (error: any) {
+    console.error("Blob Upload Error:", error);
+    res.status(500).json({ error: error.message || "Failed to upload blob" });
+  }
 });
 
 // Facebook OAuth Routes

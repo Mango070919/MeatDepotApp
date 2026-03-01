@@ -310,15 +310,33 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
               const firebaseData = await loadStateFromFirebase();
               if (firebaseData) {
                   restoreData(firebaseData);
+                  setHasLoadedFromCloud(true);
+                  setIsCloudSyncing(false);
+                  return;
               }
-              // Mark as loaded even if empty, so auto-sync can start
-              setHasLoadedFromCloud(true);
           } catch(e) { 
               console.warn("Firebase load failed/skipped", e); 
-              // Still mark as loaded to allow local-first operation with auto-sync attempts
-              setHasLoadedFromCloud(true);
           }
       }
+
+      // 2. Try Vercel KV (Redis)
+      try {
+          const response = await fetch('/api/kv/state');
+          if (response.ok) {
+              const kvData = await response.json();
+              if (kvData && Object.keys(kvData).length > 0) {
+                  restoreData(kvData);
+                  setHasLoadedFromCloud(true);
+                  setIsCloudSyncing(false);
+                  return;
+              }
+          }
+      } catch (e) {
+          console.warn("KV load failed", e);
+      }
+
+      // Mark as loaded even if empty, so auto-sync can start
+      setHasLoadedFromCloud(true);
 
       setIsCloudSyncing(false);
     };
@@ -349,11 +367,20 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
               initFirebase(effectiveConfig);
               syncPromises.push(saveStateToFirebase(dataToSave).catch(e => {
                   console.error("Firebase sync failed:", e);
-                  throw e;
+                  // Don't throw here, let KV try
               }));
           }
 
-          // 2. PING LOCAL SERVER (For Vercel/Full-stack awareness)
+          // 2. SYNC TO VERCEL KV (Redis)
+          syncPromises.push(fetch('/api/kv/state', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(dataToSave)
+          }).then(res => {
+              if (!res.ok) throw new Error("KV Sync Failed: " + res.statusText);
+          }));
+
+          // 3. PING LOCAL SERVER (Legacy)
           try {
               syncPromises.push(fetch('/api/sync', {
                   method: 'POST',
